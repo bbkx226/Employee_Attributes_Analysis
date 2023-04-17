@@ -1,7 +1,7 @@
 # Brandon Ban Kai Xian
 # TP067094
 
-# Install packages
+#---- Install packages ----
 install.packages("dplyr")
 install.packages("ggplot2")
 install.packages("magrittr")
@@ -13,7 +13,7 @@ install.packages("plotrix")
 install.packages("openair")
 install.packages("ggrepel")
 
-# Load packages
+#---- Load packages ----
 library(dplyr)
 library(ggplot2)
 library(magrittr)
@@ -268,7 +268,7 @@ Q1_1 = function() {
   # Filter data for terminated employees
   data_filtered <- data %>% filter(status == "TERMINATED")
   
-  # Create the desity graph
+  # Create the density graph
   ggplot(data_filtered, aes(x = age, fill = termination_reason)) + 
   geom_density(alpha = 0.5) + # Adjust the visibility of the overlapping densities
   labs(title = "Relationship between Employee Age and Termination Reason",
@@ -288,17 +288,27 @@ Q1_1()
 
 #---- Analysis 1.2 - Analyze the relationship between job title and termination reason ----
 Q1_2 = function() {
+  
   # filter only the terminated employees
   data_terminated <- filter(data, status == "TERMINATED")
+  
   # show the list of termination reasons
   unique(data_terminated$termination_reason) 
+  
   # create a bar chart for each job title
   ggplot(data_terminated, aes(x = termination_reason, fill = termination_reason)) + 
-    stat_count() +
-    facet_wrap( ~ job_title) +
-    labs(x = "Termination Reason", y = "Count", fill = "Termination Reason") +
-    scale_fill_manual(values = c("Layoff" = "#0072B2", "Resignation" = "#E69F00", "Retirement" = "#09DDFA")) +
-    ggtitle("Termination Reasons by Job Title")
+  
+  # This adds the count of terminated employees for each termination reason to the plot  
+  stat_count() +
+    
+  # This divides the plot into facets (multiple plots arranged in a grid) based
+  facet_wrap( ~ job_title) +
+  labs(x = "Termination Reason", 
+       y = "Count", 
+       fill = "Termination Reason") +
+    
+  scale_fill_manual(values = c("Layoff" = "#0072B2", "Resignation" = "#E69F00", "Retirement" = "#09DDFA")) +
+  ggtitle("Termination Reasons by Job Title")
 }
 Q1_2()
 
@@ -309,10 +319,12 @@ Q1_2()
 # As employees age, it may become more difficult for them to perform the tasks required of them, leading to retirement. 
 # On the other hand, cashiering involves standing for long periods and repetitive tasks, which can lead to boredom and burnout, 
 # especially for younger employees who may be seeking more challenging and fulfilling work
+
 #---- Analysis 1.3 - Analyze the relationship between length of service and termination reason for cashiers and meat cutters -----
-# 
+
 Q1_3 = function() {
-  # Select only the data for employees who have been terminated
+  
+  # Select only the data for employees who have been terminated and worked as cahsier or meat cutter
   cashier_terminated = filter(data, status == "TERMINATED", job_title == "Cashier")
   meat_cutter_terminated = filter(data, status == "TERMINATED", job_title == "Meat Cutter")
   
@@ -326,26 +338,29 @@ Q1_3 = function() {
     summarize(count = n(), .groups = "drop")
   
   # Visualize stacked bar chart for terminated employees who worked as cashier
-  a <- ggplot(cashier_count, aes(x = service_count, y = count, fill = termination_reason)) + 
-    geom_col() +
-    labs(title = "Cashier",
-         x = "Length of Service (Years)",
-         y = "Terminated Employees (Person)",
-         fill = "Termination Reason") +
-    scale_x_continuous(breaks = seq(0, max(cashier_terminated$service_count), by = 1)) +
-    theme_minimal()
+  cashier_bar_plot <- ggplot(cashier_count, aes(x = service_count, y = count, fill = termination_reason)) + 
+  # Creates vertical bars to represent the data
+  geom_col() +
+  labs(title = "Cashier",
+       x = "Length of Service (Years)",
+       y = "Terminated Employees (Person)",
+       fill = "Termination Reason") +
+  scale_x_continuous(breaks = seq(0, max(cashier_terminated$service_count), by = 1)) +
+  theme_minimal()
+  
   # Visualize stacked bar chart for terminated employees who worked as meat cutter
-  b <- ggplot(meat_cutter_count, aes(x = service_count, y = count, fill = termination_reason)) + 
-    geom_col() +
-    labs(title = "Meat Cutter",
-         x = "Length of Service (Years)",
-         y = "Terminated Employees (Person)",
-         fill = "Termination Reason") +
-    scale_x_continuous(breaks = seq(0, max(meat_cutter_terminated$service_count), by = 1)) +
-    theme_minimal()
+  meat_cutter_bar_plot <- ggplot(meat_cutter_count, aes(x = service_count, y = count, fill = termination_reason)) + 
+  # Creates vertical bars to represent the data
+  geom_col() +
+  labs(title = "Meat Cutter",
+       x = "Length of Service (Years)",
+       y = "Terminated Employees (Person)",
+       fill = "Termination Reason") +
+  scale_x_continuous(breaks = seq(0, max(meat_cutter_terminated$service_count), by = 1)) +
+  theme_minimal()
   
   # Arrange the plots side by side
-  grid.arrange(a, b, ncol=2)
+  grid.arrange(cashier_bar_plot, meat_cutter_bar_plot, ncol=2)
 }
 Q1_3()
 
@@ -355,6 +370,7 @@ Q1_3()
 # This could lead to burnout or stress, which could also result in employees leaving the job earlier or being terminated.
 # The job of meat cutter demands a particular skill set and expertise, which suggests that it may take a considerable amount of time (usually 2-5 years) for them to attain the required level of proficiency. 
 # This factor could be one of the reasons behind the higher retirement rate among meat cutters after serving for a longer duration.
+
 #------------------------------- Conclusion ---------------------------------------
 # In conclusion, the factors associated with employee termination can be attributed to various reasons based on age, occupation, and job demands. 
 # Employees aged 60 and above are more likely to retire, while those between 20 and 35 are more likely to resign due to exploring other career opportunities, 
@@ -377,26 +393,28 @@ Q2_1 = function() {
   data_sub_agg <- data_sub %>% 
     filter(termination_reason == "Layoff") %>% 
     group_by(department_name) %>% 
-    summarise(count = n())
+    summarise(count = n()) %>%
+    ungroup()
   
   # Create a table showing the count of layoffs in each department
   table <- data_sub_agg %>% 
     spread(department_name, count, fill = 0)
 
   # Create a heat map
-  ggplot(data = data_sub_agg, aes(x = department_name, y = "")) + 
-    geom_tile(aes(fill = count), color = "white", size = 1.5) + 
-    scale_fill_gradient(low = "pink", high = "red") + 
-    theme(axis.text.y = element_blank(), 
-          axis.title.y = element_blank(),
-          axis.ticks.y = element_blank(),
-          plot.title = element_text(hjust = 0.5),
-          panel.background = element_rect(color = "black", size = 1, fill = NA),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank()) +
-    ggtitle("Count of Layoffs by Department") +
-    labs(x = "Department", y = "") +
-    theme(plot.margin = unit(c(1, 1, 1, 5), "cm"))
+  ggplot(data_sub_agg, aes(x = department_name, y = "")) + 
+  geom_tile(aes(fill = count), color = "white", size = 1.5) + 
+  scale_fill_gradient(low = "#FFFF00", high = "#FF0000") + 
+  # element_blank() removes the text labels
+  theme(axis.text.y = element_blank(), 
+        axis.title.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        plot.title = element_text(hjust = 0.5), # centers the plot title horizontally 
+        panel.background = element_rect(color = "black", size = 1, fill = NA),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()) +
+  ggtitle("Count of Layoffs by Department") +
+  labs(x = "Department", y = "") +
+  theme(plot.margin = unit(c(1, 1, 1, 5), "cm"))
 }
 Q2_1()
 
@@ -411,19 +429,27 @@ Q2_2 = function() {
   # Subset the data to only include employees terminated due to layoff
   layoff_data <- subset(data, termination_reason == "Layoff")
   
-  # Group the data by job_title and termination_reason, and count the number of employees in each group
+  # Group the data by job_title and termination_reason, and `aggregate()` count the number of employee layoffs by job title and termination reason.
+  # `FUN` specifies the function to be used to collapse the data
+  # `length` function is being used to count the number of employee IDs for each combination of job title and termination reason.
   job_layoff_count <- aggregate(layoff_data$employee_ID, by=list(layoff_data$job_title, layoff_data$termination_reason), FUN=length)
+
+  # Create each column's name
   names(job_layoff_count) <- c("job_title", "termination_reason", "count")
   
   # Order the job titles by the count of layoffs
   job_layoff_count <- job_layoff_count[order(job_layoff_count$count, decreasing=TRUE),]
-  
+
   # Create a stacked bar plot
   ggplot(job_layoff_count, aes(x=job_title, y=count, fill=termination_reason)) +
-    geom_bar(stat="identity") +
-    labs(x="Job Title", y="Count", fill="Termination Reason") +
-    ggtitle("Relationship between Job Title and Layoff") +
-    theme(plot.title = element_text(hjust = 0.5), legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
+  geom_bar(stat="identity") +
+  labs(x="Job Title", 
+       y="Count", 
+       fill="Termination Reason") +
+  ggtitle("Relationship between Job Title and Layoff") +
+  theme(plot.title = element_text(hjust = 0.5), 
+        legend.position = "bottom", 
+        axis.text.x = element_text(angle = 45, hjust = 1))
 }
 Q2_2()
 
@@ -442,11 +468,11 @@ Q2_3 = function() {
   
   # plot stacked bar chart using the summarized data
   ggplot(laid_off_summary, aes(x=generation, y=num_laid_off, fill=gender)) +
-    geom_bar(stat="identity") +
-    xlab("Age Generation") +
-    ylab("Number of Laid Off Employees") +
-    ggtitle("Number of Laid Off Employees by Age Generation and Gender") +
-    theme(plot.title = element_text(hjust = 0.5))
+  geom_bar(stat="identity") +
+  labs(x="Age Generation", 
+       y="Number of Laid Off Employees") +
+  ggtitle("Number of Laid Off Employees by Age Generation and Gender") +
+  theme(plot.title = element_text(hjust = 0.5))
 }
 Q2_3()
 
@@ -474,52 +500,56 @@ Q2_3()
 
 #---- Analysis 3.1 - Find the correlation between the age of the employee and the likelihood of termination by gender ----
 Q3_1 = function() {
+  
+  # Filter out the year of termination date
+  data$termination_year <- year(ymd(data$termination_date))
+  
   # Filter the data that only applicable for those who terminated in 2014 & 2015
-  data$record_year <- year(ymd(data$record_date))
-  
-  data_2014_2015 <- data %>% 
-    filter(record_year >= 2014 & record_year <= 2015)
-  
+  data_2014_2015 <- data %>%
+    filter(termination_year %in% c(2014, 2015), status == "TERMINATED")
+
   # Create the histogram for females
-  data_terminated <- filter(data_2014_2015, status == "TERMINATED")
-  female_data <- subset(data_terminated, gender == "Female")
+  female_data <- subset(data_2014_2015, gender == "Female")
   female_hist <- ggplot(female_data, aes(x = age, fill = termination_reason)) +
-    geom_histogram(binwidth = 2) +
+    geom_histogram(binwidth = 2, color = "black", width = 1) +
     scale_fill_brewer(palette = "Set1") +
     labs(title = "Female Employee Termination by Age and Reason", 
-         x = "Age", y = "Frequency")
+         x = "Age", 
+         y = "Frequency")
   
   # Create the histogram for males
-  male_data <- subset(data_terminated, gender == "Male")
+  male_data <- subset(data_2014_2015, gender == "Male")
   male_hist <- ggplot(male_data, aes(x = age, fill = termination_reason)) +
-    geom_histogram(binwidth = 2) +
+    geom_histogram(binwidth = 2, color = "black", width = 1) +
     scale_fill_brewer(palette = "Set1") +
     labs(title = "Male Employee Termination by Age and Reason", 
          x = "Age", y = "Frequency")
   
-  # Combine the histograms
-  gridExtra::grid.arrange(female_hist, male_hist, ncol = 2)
+  # Combine the histograms to show them all in a graph
+  grid.arrange(female_hist, male_hist, ncol = 2)
 }
 Q3_1()
 
 # Explanation
 # There is a higher likelihood for older female employees to retire compared to older male employees, 
 # and no retirement occurred for male employees in 2014 and 2015. 
-# This trend may be attributed to the fact that female employees are more likely to be employed in job roles 
+# This trend may be attributed to the fact that old female employees are more likely to be employed in job roles 
 # that have different retirement patterns compared to those of male employees.
 
-#---- Analysis 3.2 - Identify the job roles with the highest number of employees above the age of 60, categorized by gender ----
+#---- Analysis 3.2 - Identify the job roles with the highest number of employees equals to or greater than the age of 60, categorized by gender ----
 Q3_2 <- function() {
   data_filtered <- data %>%
-    filter(age > 60) %>%
+    filter(age >= 60) %>%
     group_by(gender, job_title, status) %>%
     summarise(count = n(), .groups = "drop")
   
   ggplot(data_filtered, aes(x = job_title, y = count, fill = status)) +
-    geom_bar(stat = "identity", position = "stack", color = "white", size = 0.2) +
-    labs(x = "Job Title", y = "Count of Terminated Employees", fill = "Status") +
-    facet_wrap(~ gender) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  geom_bar(stat = "identity", position = "stack", color = "white", size = 0.4) +
+  labs(x = "Job Title", 
+       y = "Count of Terminated Employees", 
+       fill = "Status") +
+  facet_wrap(~ gender) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 Q3_2()
 
@@ -531,11 +561,13 @@ Q3_2()
 
 #---- Analysis 3.3 - Find the relationship between city and employees' termination ----
 Q3_3 <- function() {
-  # Filter the data that only applicable for those who terminated in 2014 & 2015
-  data$record_year <- year(ymd(data$record_date))
   
+  # Filter out the year of termination date
+  data$termination_year <- year(ymd(data$termination_date))
+  
+  # Filter the data that only applicable for those who terminated in 2014 & 2015
   data_filtered <- data %>%
-    filter(status == "TERMINATED", record_year %in% c(2014, 2015))
+    filter(status == "TERMINATED", termination_year %in% c(2014, 2015))
   
   # Counting terminated employees by gender and city
   terminated_by_city <- data_filtered %>%
@@ -545,7 +577,9 @@ Q3_3 <- function() {
   # Plotting the graph
   ggplot(terminated_by_city, aes(x = city_name, y = count, fill = gender)) +
     geom_bar(stat = "identity", position = "dodge") +
-    labs(x = "City", y = "Count of Terminated Employees", fill = "Gender") +
+    labs(x = "City", 
+         y = "Count of Terminated Employees", 
+         fill = "Gender") +
     ggtitle("Distribution of Terminated Employees by City and Gender") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
@@ -570,7 +604,10 @@ Q3_4 <- function() {
   # Plot stacked bar chart
   ggplot(data_filtered, aes(x = job_title, y = count, fill = gender)) +
     geom_bar(stat = "identity") +
-    labs(x = "Jobs in Vancouver city", y = "Number of Employees", fill = "Gender") +
+    labs(x = "Jobs in Vancouver city", 
+         y = "Number of Employees", 
+         fill = "Gender") +
+    # Flip the coordinates of x & y
     coord_flip() +
     theme(legend.position = "bottom")
 }
@@ -600,11 +637,15 @@ Q4_1 <- function() {
 
   # Plot grouped bar chart
   ggplot(termination_count, aes(x = generation, fill = generation)) +
-    stat_count() +
-    facet_wrap( ~ job_title) +
-    labs(x = "Generation", y = "Number of Terminated Employees", fill = "Status") +
-    scale_fill_manual(values = c("Baby Boomers" = "#DD4321", "Gen X" = "#0F2199", "Millennials" = "#AF3376")) +
-    ggtitle("Employees' Job by Generation")
+  stat_count() +
+  facet_wrap( ~ job_title) +
+  labs(x = "Generation", 
+       y = "Number of Terminated Employees", 
+       fill = "Status") +
+  scale_fill_manual(values = c("Baby Boomers" = "#DD4321", 
+                               "Gen X" = "#0F2199", 
+                               "Millennials" = "#AF3376")) +
+  ggtitle("Employees' Job by Generation")
 }
 Q4_1()
 
@@ -619,8 +660,10 @@ Q4_2 <- function() {
   # Filter data for terminated employees after 2013
   millennials_termination_count <- data %>%
     filter(status == "TERMINATED", generation == "Millennials", job_title == "Cashier", status_year >= 2013)
+  
   gen_x_termination_count <- data %>%
     filter(status == "TERMINATED", generation == "Gen X", job_title == "Cashier" | job_title == "Dairy Person", status_year >= 2013)
+  
   baby_boomers_termination_count <- data %>%
     filter(status == "TERMINATED", generation == "Baby Boomers", job_title == "Meat Cutter", status_year >= 2013)
   
@@ -691,10 +734,11 @@ Q5_1 <- function() {
   
   # Plot the line chart
   ggplot(service_by_year, aes(x = status_year, y = avg_service)) +
-    geom_line(color = "blue", size = 1) +
-    labs(x = "Year", y = "Average length of service (years)",
-         title = "Average Length of Service for Terminated Employees by Year") +
-    scale_x_continuous(breaks = seq(min(term_data$status_year), max(term_data$status_year), 1))
+  geom_line(color = "blue", size = 1) +
+  labs(x = "Year", 
+       y = "Average length of service (years)",
+       title = "Average Length of Service for Terminated Employees by Year") +
+  scale_x_continuous(breaks = seq(min(term_data$status_year), max(term_data$status_year), 1))
 }
 Q5_1()
 
@@ -711,11 +755,11 @@ Q5_2 <- function() {
   
   # Plot the bar graph
   ggplot(avg_service_dept, aes(x=Group.1, y=x)) +
-    geom_bar(stat="summary", fun = "mean", fill="palegreen") +
-    ggtitle("Average Length of Service by Department") +
-    xlab("Department") +
-    ylab("Average Length of Service") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  geom_bar(stat="summary", fun = "mean", fill="palegreen") +
+  ggtitle("Average Length of Service by Department") +
+  labs(x = "Department", 
+       y = "Average Length of Service") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 Q5_2()
 
@@ -731,11 +775,11 @@ Q5_3 <- function() {
   avg_service_dept <- aggregate(data$service, by=list(data$city_name), FUN=mean)
   # Plot the bar graph
   ggplot(avg_service_dept, aes(x=Group.1, y=x)) +
-    geom_bar(stat="summary", fun = "mean", fill="magenta") +
-    ggtitle("Average Length of Service by Department") +
-    xlab("Department") +
-    ylab("Average Length of Service") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  geom_bar(stat="summary", fun = "mean", fill="magenta") +
+  ggtitle("Average Length of Service by Department") +
+  labs(x = "Department", 
+       y = "Average Length of Service") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 Q5_3()
 
