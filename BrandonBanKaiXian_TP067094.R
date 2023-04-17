@@ -24,32 +24,48 @@ library(gridExtra)
 library(plotrix)
 library(openair)
 library(ggrepel)
+
 # Import data by reading csv file
 setwd("C:/Users/bbkx2/Downloads/project/R/PFDA_Assignment")
 data <- read.csv('employee_attrition.csv', header = TRUE, sep = ",")
 
 # Data Exploration
+# This function takes in the data and displays the number of columns and rows in the data,
+# the number of missing values in the data, the data structure, and the summary of the data
+# @param data: The data to be explored
 dataExploration <- function(data) {
+
   # Check number of columns
   cat("The total no. of columns is", ncol(data),"and the total no. of rows is", nrow(data),"\n")
+
   # Check number of missing values
   cat("The number of missing values in data:", sum(is.na(data)), "\n\n")
+
   # Check data structure
   cat(str(data), "\n")
+
   # Check summary of the data
   print(summary(data))
 }
 
 # Data Cleaning
+# This code is used to clean the data by removing duplicates, replacing missing values, 
+# removing unnecessary columns, renaming columns, and returning the cleaned data.
+# @param data: The data to be cleaned
 dataCleaning <- function(data) {
+
   # Check for duplicates
   sum(duplicated(data))
+
   # If there's any, remove the duplicates
   data <- distinct(data)
+
   # Replace missing values with NA, if any
   data[data == ""] <- NA
+
   # Remove unnecessary column
   data <- select(data, -c("gender_short"))
+
   # Renaming column names
   colnames(data) <- c("employee_ID", "record_date", "birth_date", "hired_date", "termination_date", 
                       "age", "service_count", "city_name", "department_name", "job_title", 
@@ -60,19 +76,26 @@ dataCleaning <- function(data) {
 
 # Data Pre-processing
 dataPreprocessing <- function(data) {
+
   # Replace default termination date (still working) to "NA"
   data$termination_date = ifelse(data$termination_date == "1/1/1900", NA, data$termination_date)
+
   # Converted to POSIXct (a date/time data type in R) using the specified date format strings
   data$record_date <- as.POSIXct(data$record_date, format = "%m/%d/%Y %H:%M")
   data$birth_date <- as.POSIXct(data$birth_date, format = "%m/%d/%Y")
   data$hired_date <- as.POSIXct(data$hired_date, format = "%m/%d/%Y")
   data$termination_date <- as.POSIXct(data$termination_date, format = "%m/%d/%Y")
-  # Replace typo "resignaton" -> "resignation"
+
+  # Replace typo "resignaton" to "resignation"
   data$termination_reason <- str_replace(data$termination_reason, "Resignaton", "Resignation")
-  # Splits the job title string by the comma character and returns the first element of the resulting string vector
+
+  # Splits the job title string (e.g <Director, Any> to <Director> only) by the comma character 
+  # and returns the first element of the resulting string vector
   data$job_title <- sapply(data$job_title, function(f) {strsplit(f, ",")[[1]]}[1])
-  # Converted to character format
+
+  # Converted job title to character format
   data$job_title <- as.character(data$job_title)
+  
   # Converted character type data into factor
   data <- data %>%
     mutate(
@@ -91,20 +114,27 @@ dataPreprocessing <- function(data) {
   # Extract the year from the birth date
   data$birth_year <- year(ymd(data$birth_date))
   
+  # This code creates a new variable generation based on the birth_year variable
+  # The generation variable categorises the different birth years into five different groups
+  # The first group is the Silent Generation, the second group is the Baby Boomers, 
+  # the third group is Gen X, the fourth group is the Millennials and the fifth group is Gen Z
   data$generation <- ifelse(data$birth_year >= 1997, "Gen Z",
-                    ifelse(data$birth_year >= 1981, "Millennials",
-                    ifelse(data$birth_year >= 1965, "Gen X",
-                    ifelse(data$birth_year >= 1946, "Baby Boomers", "The Silent Generation"))))
+                     ifelse(data$birth_year >= 1981, "Millennials",
+                     ifelse(data$birth_year >= 1965, "Gen X",
+                     ifelse(data$birth_year >= 1946, "Baby Boomers", "The Silent Generation"))))
   
   return(data)
 }
 
+# Explore, CLean, and Pre-process the data all at once
 dataExploration(data)
 data <- data %>%
   dataCleaning() %>%
   dataPreprocessing()
 
+# View the processed data in table format
 View(data)
+
 #+============================================================================+
 #| Data Exploration for Ideas of questions to ask                             |
 #+============================================================================+
@@ -115,21 +145,23 @@ firstIdea <- function() {
   
   # group the data by termination year and termination reason
   termination_by_year_reason <- data %>%
-    filter(status == "TERMINATED") %>% # remove rows with missing termination date
-    group_by(termination_year, termination_reason) %>%
-    summarise(n = n(), .groups = 'drop')
-  
+    filter(status == "TERMINATED") %>% # Filter to only terminated employees
+    group_by(termination_year, termination_reason) %>% # Group by termination year and termination reason
+    summarise(n = n(), .groups = 'drop') # Summarise number of employees
+
   # create a stacked bar chart
-  ggplot(termination_by_year_reason, aes(x = termination_year, y = n, fill = termination_reason)) +
-    geom_bar(stat = "identity") +
-    scale_fill_manual(values = c(c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3"))) + # specify color for each termination reason
-    labs(title = "Employee Termination by Year and Reason",
-         x = "Year of Termination",
-         y = "Number of Terminations",
-         fill = "Termination Reason") +
-    theme_bw() + # set theme to black and white
-    theme(plot.title = element_text(hjust = 0.5), # center the title
-          axis.text.x = element_text(angle = 90, vjust = 0.5)) # rotate x-axis labels
+  # specifies the data and the variables to be used for the x and y axes and for color
+  ggplot(termination_by_year_reason, aes(x = termination_year, y = n, fill = termination_reason)) + 
+  geom_bar(stat = "identity") +   # specifies the type of plot to be created
+  # specify color for each termination reason
+  scale_fill_manual(values = c(c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3"))) + 
+  labs(title = "Employee Termination by Year and Reason", # title for the plot
+        x = "Year of Termination", # label for the x axis
+        y = "Number of Terminations", # label for the y axis
+        fill = "Termination Reason") + # label for the legend
+  theme_bw() + # set theme to black and white
+  theme(plot.title = element_text(hjust = 0.5), # center the title
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) # rotate the x axis labels and move them closer to the axis # rotate x-axis labels
 }
 firstIdea()
 # Observation:
