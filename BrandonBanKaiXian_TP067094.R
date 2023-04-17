@@ -58,16 +58,16 @@ dataCleaning <- function(data) {
   sum(duplicated(data))
 
   # If there's any, remove the duplicates
-  data <- distinct(data)
+  unique(data)
 
   # Replace missing values with NA, if any
   data[data == ""] <- NA
-
+  
   # Remove unnecessary column
   data <- select(data, -c("gender_short"))
 
   # Renaming column names
-  colnames(data) <- c("employee_ID", "record_date", "birth_date", "hired_date", "termination_date", 
+  colnames(data) <- c("employee_ID", "record_date", "birth_date", "hired_date", "termination_date",
                       "age", "service_count", "city_name", "department_name", "job_title", 
                       "store_name", "gender", "termination_reason", "termination_type", "status_year", 
                       "status", "business_unit")
@@ -75,6 +75,9 @@ dataCleaning <- function(data) {
 }
 
 # Data Pre-processing
+# This function pre-processes the input data by cleaning and transforming it.
+# Finally, it returns the pre-processed data.
+# @param data: The data to be processed
 dataPreprocessing <- function(data) {
 
   # Replace default termination date (still working) to "NA"
@@ -115,7 +118,7 @@ dataPreprocessing <- function(data) {
   data$birth_year <- year(ymd(data$birth_date))
   
   # This code creates a new variable generation based on the birth_year variable
-  # The generation variable categorises the different birth years into five different groups
+  # The generation variable categorizes the different birth years into five different groups
   # The first group is the Silent Generation, the second group is the Baby Boomers, 
   # the third group is Gen X, the fourth group is the Millennials and the fifth group is Gen Z
   data$generation <- ifelse(data$birth_year >= 1997, "Gen Z",
@@ -126,8 +129,10 @@ dataPreprocessing <- function(data) {
   return(data)
 }
 
-# Explore, CLean, and Pre-process the data all at once
+# Explore, Clean, and Pre-process the data all at once
+# The data is first explored and then cleaned and preprocessed.
 dataExploration(data)
+
 data <- data %>%
   dataCleaning() %>%
   dataPreprocessing()
@@ -138,8 +143,10 @@ View(data)
 #+============================================================================+
 #| Data Exploration for Ideas of questions to ask                             |
 #+============================================================================+
+
 #---- 1st Idea - Trends in employee termination within 10 years ----
 firstIdea <- function() {
+  
   # create a new column for termination year
   data$termination_year <- format(data$termination_date, "%Y")
   
@@ -147,26 +154,34 @@ firstIdea <- function() {
   termination_by_year_reason <- data %>%
     filter(status == "TERMINATED") %>% # Filter to only terminated employees
     group_by(termination_year, termination_reason) %>% # Group by termination year and termination reason
-    summarise(n = n(), .groups = 'drop') # Summarise number of employees
+    summarise(count = n(), .groups = 'drop') # Summarise number of employees
 
   # create a stacked bar chart
   # specifies the data and the variables to be used for the x and y axes and for color
-  ggplot(termination_by_year_reason, aes(x = termination_year, y = n, fill = termination_reason)) + 
-  geom_bar(stat = "identity") +   # specifies the type of plot to be created
+  ggplot(termination_by_year_reason, aes(x = termination_year, y = count, fill = termination_reason)) +
+    
+  geom_bar(stat = "identity") + # stat = "identity" argument tells ggplot to use the actual values in "count"
+  
   # specify color for each termination reason
-  scale_fill_manual(values = c(c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3"))) + 
+  scale_fill_manual(values = c(c("#e41a1c", "#377eb8", "#4daf4a"))) + 
+    
   labs(title = "Employee Termination by Year and Reason", # title for the plot
         x = "Year of Termination", # label for the x axis
         y = "Number of Terminations", # label for the y axis
         fill = "Termination Reason") + # label for the legend
+    
   theme_bw() + # set theme to black and white
+    
   theme(plot.title = element_text(hjust = 0.5), # center the title
-        axis.text.x = element_text(angle = 90, vjust = 0.5)) # rotate the x axis labels and move them closer to the axis # rotate x-axis labels
+        axis.text.x = element_text(vjust = 0.5) # move the x axis labels closer to the axis
+        ) 
 }
 firstIdea()
+
 # Observation:
-# Layoff only happened in 2014 and 2015
-# Many employee leave the company in 2014 and most common reason is layoff
+# The layoff only occurred during the years 2014 and 2015
+# A significant number of employees left the company in 2014, 
+# and the most frequently cited reason for leaving was the layoff.
 
 # Questions that can be asked:
 # What factors are associated with employee termination?
@@ -175,20 +190,32 @@ firstIdea()
 
 #---- 2nd Idea - Analysis of employee termination by gender within ten years ----
 secondIdea <- function() {
+  
   # Create a new column for the year of termination
   data$termination_year <- as.integer(substr(data$termination_date, 1, 4))
-  # Filter out any rows where the termination year is missing
+  
+  # Filter to use only the terminated employees' data
   data <- data %>%
-    filter(!is.na(termination_year))
+    filter(status == "TERMINATED")
 
   # Create the bar chart
+  # factor function is used to ensure that the X-axis shows all years 
+  # even if there is no data for a particular year
   ggplot(data, aes(x = factor(termination_year), group = gender, fill = gender)) +
-    geom_bar(position = "dodge", color = "black", stat = "count") +
-    labs(title = "Number of Terminated Employees by Gender and Year",
-         x = "Year of Termination", y = "Count of Employees", fill = "Gender") +
-    theme_minimal()
+    
+  # dodge the bars so that they do not overlap
+  geom_bar(position = "dodge", color = "black", stat = "count") +
+    
+  labs(title = "Number of Terminated Employees by Gender and Year",
+       x = "Year of Termination", 
+       y = "Count of Employees", 
+       fill = "Gender"
+       ) +
+    
+  theme_minimal()
 }
 secondIdea()
+
 # Observation:
 # Large number of female employees are terminated in 2014 and 2015
 # The termination of female employees are greater than male employees
@@ -198,22 +225,33 @@ secondIdea()
 
 #---- 3rd Idea - Understand the age distribution of the workforce ----
 thirdIdea <- function() {
+  
   # Count number of employees in each generation
   generation_count <- data %>%
     group_by(status_year, generation) %>%
     summarize(count = n(), .groups = 'drop') %>%
     filter(!is.na(generation)) %>%
-    ungroup()
+    ungroup() # After grouping the data and summarizing it, remove the grouping structure of the data frame
   
   # Plot number of employees in each age group by year
   ggplot(generation_count, aes(x = status_year, y = count, color = generation)) +
-    geom_line(size = 0.75) +
-    labs(x = "Year", y = "Number of Employees", title = "Number of Employees by Age Generation Over Time") +
-    scale_color_brewer(type = "qual", palette = "Dark2") +
-    scale_x_continuous(breaks = seq(min(generation_count$status_year), max(generation_count$status_year), 1)) +
-    theme_minimal()
+  geom_line(size = 0.75) +
+  labs(x = "Year", 
+       y = "Number of Employees", 
+       title = "Number of Employees by Age Generation Over Time"
+       ) +
+  # Sets the qualitative color palette for the different generations.
+  scale_color_brewer(type = "qual", 
+                     palette = "Dark2"
+                     ) +
+  # Sets the breaks on the x-axis 
+  scale_x_continuous(breaks = seq(min(generation_count$status_year), 
+                                  max(generation_count$status_year), 
+                                  1)) +
+  theme_minimal()
 }
 thirdIdea()
+
 # Observation:
 # The number of millennial employees has been increasing year by year
 # Starting from 2013, there appears to be a decline in the total number of employees across all generations.
@@ -226,17 +264,18 @@ thirdIdea()
 
 #---- Analysis 1.1 - Analyze the relationship between employee age and termination reason ----
 Q1_1 = function() {
-  # Filter data for termination reasons "layoff", "resignation" and "retirement"
-  data_filtered <- data %>% filter(termination_reason %in% c("Layoff", "Resignation", "Retirement"))
   
-  # Visualize relationship between employee age and termination reason using ggplot2
+  # Filter data for terminated employees
+  data_filtered <- data %>% filter(status == "TERMINATED")
+  
+  # Create the desity graph
   ggplot(data_filtered, aes(x = age, fill = termination_reason)) + 
-    geom_density(alpha = 0.5) +
-    labs(title = "Relationship between Employee Age and Termination Reason",
-         x = "Employee Age",
-         y = "Density",
-         fill = "Termination Reason") +
-    theme_minimal()
+  geom_density(alpha = 0.5) + # Adjust the visibility of the overlapping densities
+  labs(title = "Relationship between Employee Age and Termination Reason",
+       x = "Employee Age",
+       y = "Density",
+       fill = "Termination Reason") +
+  theme_minimal()
 }
 Q1_1()
 
@@ -246,6 +285,7 @@ Q1_1()
 # Employees aged 60 and above may be more likely to retire due to reaching retirement age or wanting to reduce their workload
 # employees aged between 20 and 35 may be more likely to resign due to exploring other career opportunities, 
 # seeking higher pay or wanting to further their education
+
 #---- Analysis 1.2 - Analyze the relationship between job title and termination reason ----
 Q1_2 = function() {
   # filter only the terminated employees
@@ -553,9 +593,9 @@ Q3_4()
 #==============================================================================
 
 #==== Q4. Why has the total number of employees been decreasing since 2013?
-#---- Analysis 4.1 - Find the correlation between employees' generation, job title, and job termination ----
+#---- Analysis 4.1 - Find the correlation between employees' generation, job title, and job termination after 2013 ----
 Q4_1 <- function() {
-  termination_count <- data %>%
+  termination_count <- data %>% 
     filter(status == "TERMINATED", status_year >= 2013)
 
   # Plot grouped bar chart
@@ -574,7 +614,7 @@ Q4_1()
 # This trend may be attributed to changes in the retail industry and organizational policies, resulting in a decrease in demand for these positions. 
 # Moreover, employees may have opted for better job opportunities offering higher pay, benefits, and career advancement prospects.
 
-#---- Analysis 4.2 - Determine the termination reason of different generation employees ----
+#---- Analysis 4.2 - Determine the termination reason of different generation employees after 2013 ----
 Q4_2 <- function() {
   # Filter data for terminated employees after 2013
   millennials_termination_count <- data %>%
@@ -709,3 +749,5 @@ Q5_3()
 # The average length of service for terminated employees varies significantly depending on the year, department, and city. 
 # By analyzing these variations, companies can gain valuable insights into factors that contribute to employee retention and 
 # implement strategies to improve employee loyalty and reduce turnover rates.
+
+#==============================================================================
