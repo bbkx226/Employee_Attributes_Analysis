@@ -33,7 +33,7 @@ data <- read.csv('employee_attrition.csv', header = TRUE, sep = ",")
 # This function takes in the data and displays the number of columns and rows in the data,
 # the number of missing values in the data, the data structure, and the summary of the data
 # @param data: The data to be explored
-dataExploration <- function(data) {
+explore_data <- function() {
 
   # Check number of columns
   cat("The total no. of columns is", ncol(data),"and the total no. of rows is", nrow(data),"\n")
@@ -52,7 +52,7 @@ dataExploration <- function(data) {
 # This code is used to clean the data by removing duplicates, replacing missing values, 
 # removing unnecessary columns, renaming columns, and returning the cleaned data.
 # @param data: The data to be cleaned
-dataCleaning <- function(data) {
+clean_data <- function(data) {
 
   # Check for duplicates
   sum(duplicated(data))
@@ -78,7 +78,7 @@ dataCleaning <- function(data) {
 # This function pre-processes the input data by cleaning and transforming it.
 # Finally, it returns the pre-processed data.
 # @param data: The data to be processed
-dataPreprocessing <- function(data) {
+preprocess_data <- function(data) {
 
   # Replace default termination date (still working) to "NA"
   data$termination_date = ifelse(data$termination_date == "1/1/1900", NA, data$termination_date)
@@ -120,7 +120,7 @@ dataPreprocessing <- function(data) {
   # This code creates a new variable generation based on the birth_year variable
   # The generation variable categorizes the different birth years into five different groups
   # The first group is the Silent Generation, the second group is the Baby Boomers, 
-  # the third group is Gen X, the fourth group is the Millennials and the fifth group is Gen Z
+  # the third group is Gen X, the fourth group is the Millennial and the fifth group is Gen Z
   data$generation <- ifelse(data$birth_year >= 1997, "Gen Z",
                      ifelse(data$birth_year >= 1981, "Millennials",
                      ifelse(data$birth_year >= 1965, "Gen X",
@@ -130,12 +130,12 @@ dataPreprocessing <- function(data) {
 }
 
 # Explore, Clean, and Pre-process the data all at once
-# The data is first explored and then cleaned and preprocessed.
-dataExploration(data)
+# The data is first explored and then cleaned and pre-processed.
+explore_data()
 
 data <- data %>%
-  dataCleaning() %>%
-  dataPreprocessing()
+  clean_data() %>%
+  preprocess_data()
 
 # View the processed data in table format
 View(data)
@@ -145,7 +145,7 @@ View(data)
 #+============================================================================+
 
 #---- 1st Idea - Trends in employee termination within 10 years ----
-firstIdea <- function() {
+first_idea <- function() {
   
   # create a new column for termination year
   data$termination_year <- format(data$termination_date, "%Y")
@@ -154,7 +154,7 @@ firstIdea <- function() {
   termination_by_year_reason <- data %>%
     filter(status == "TERMINATED") %>% # Filter to only terminated employees
     group_by(termination_year, termination_reason) %>% # Group by termination year and termination reason
-    summarise(count = n(), .groups = 'drop') # Summarise number of employees
+    summarise(count = n(), .groups = 'drop') # Summarize number of employees
 
   # create a stacked bar chart
   # specifies the data and the variables to be used for the x and y axes and for color
@@ -164,7 +164,7 @@ firstIdea <- function() {
   
   # specify color for each termination reason
   scale_fill_manual(values = c(c("#e41a1c", "#377eb8", "#4daf4a"))) + 
-    
+
   labs(title = "Employee Termination by Year and Reason", # title for the plot
         x = "Year of Termination", # label for the x axis
         y = "Number of Terminations", # label for the y axis
@@ -173,10 +173,10 @@ firstIdea <- function() {
   theme_bw() + # set theme to black and white
     
   theme(plot.title = element_text(hjust = 0.5), # center the title
-        axis.text.x = element_text(vjust = 0.5) # move the x axis labels closer to the axis
-        ) 
+        axis.text.x = element_text(vjust = 0.5)) # move the x axis labels closer to the axis
+ 
 }
-firstIdea()
+first_idea()
 
 # Observation:
 # The layoff only occurred during the years 2014 and 2015
@@ -189,7 +189,7 @@ firstIdea()
 # What is the average length of service for terminated employees? Does this vary by department or job title?
 
 #---- 2nd Idea - Analysis of employee termination by gender within ten years ----
-secondIdea <- function() {
+second_idea <- function() {
   
   # Create a new column for the year of termination
   data$termination_year <- as.integer(substr(data$termination_date, 1, 4))
@@ -214,7 +214,7 @@ secondIdea <- function() {
     
   theme_minimal()
 }
-secondIdea()
+second_idea()
 
 # Observation:
 # Large number of female employees are terminated in 2014 and 2015
@@ -224,7 +224,7 @@ secondIdea()
 # How does the number of terminated employees differ by gender?
 
 #---- 3rd Idea - Understand the age distribution of the workforce ----
-thirdIdea <- function() {
+third_idea <- function() {
   
   # Count number of employees in each generation
   generation_count <- data %>%
@@ -233,24 +233,24 @@ thirdIdea <- function() {
     filter(!is.na(generation)) %>%
     ungroup() # After grouping the data and summarizing it, remove the grouping structure of the data frame
   
-  # Plot number of employees in each age group by year
+  # Plot number of employees in each age group by year using line graph
   ggplot(generation_count, aes(x = status_year, y = count, color = generation)) +
   geom_line(size = 0.75) +
   labs(x = "Year", 
        y = "Number of Employees", 
-       title = "Number of Employees by Age Generation Over Time"
-       ) +
+       title = "Number of Employees by Age Generation Over Time") +
+    
   # Sets the qualitative color palette for the different generations.
   scale_color_brewer(type = "qual", 
-                     palette = "Dark2"
-                     ) +
+                     palette = "Dark2") +
+    
   # Sets the breaks on the x-axis 
   scale_x_continuous(breaks = seq(min(generation_count$status_year), 
-                                  max(generation_count$status_year), 
-                                  1)) +
+                                  max(generation_count$status_year), 1)) +
+    
   theme_minimal()
 }
-thirdIdea()
+third_idea()
 
 # Observation:
 # The number of millennial employees has been increasing year by year
