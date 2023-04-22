@@ -545,7 +545,6 @@ Q3_2 <- function() {
     summarise(count = n(), .groups = "drop") %>%
     mutate(job_title = fct_reorder(job_title, count, .desc = FALSE))
   
-  View(data_filtered)
   ggplot(data_filtered, aes(x = job_title, y = count, fill = status)) +
     geom_bar(stat = "identity", position = "stack", color = "black", size = 0.4) +
     labs(x = "Job Title", 
@@ -557,10 +556,11 @@ Q3_2 <- function() {
 Q3_2()
 
 # Explanation:
-# Based on the analysis, it was found that the job role with the highest number of employees above the age of 60, for both male and female, was meat cutter. 
-# However, it was observed that a higher number of female employees had left the job compared to male employees. 
-# One possible explanation for this trend could be that the physical demands of the job, which require stamina and strength, become more challenging for female employees with increasing age, 
-# resulting in a higher likelihood of termination.
+# The analysis revealed that the job role with the greatest number of female employees over the age of 60 in 2014 was that of a storage manager. 
+# This trend may be attributed to the physically demanding nature of the job, which requires endurance and strength that may become more challenging 
+# for female employees as they age, leading to a higher probability of termination. 
+# Additionally, it was observed that there were only a little numbers of male employees aged 60 in 2014, 
+# possibly due to a retirement or layoff program that targeted male employees in this age group. 
 
 #---- Analysis 3.3 - Find the relationship between city and employees' termination in year 2014 ----
 Q3_3 <- function() {
@@ -568,7 +568,7 @@ Q3_3 <- function() {
   # Filter out the year of termination date
   data$termination_year <- year(ymd(data$termination_date))
   
-  # Filter the data that only applicable for those who terminated in 2014 & 2015
+  # Filter the data that only applicable for those who terminated in 2014
   data_filtered <- data %>%
     filter(status == "TERMINATED", termination_year %in% c(2014))
   
@@ -590,37 +590,62 @@ Q3_3 <- function() {
 Q3_3()
 
 # Explanation:
-# According to the graph, Vancouver had the highest number of terminated female employees. 
-# This may be attributed to a possible decline in the industries where female employees were more represented in Vancouver, resulting in higher termination rates.
+# According to the graph, Vancouver had the highest number of terminated female employees, followed by Fort Nelson. 
+# This may be attributed to a possible decline in the industries where female employees were more represented in Vancouver and Fort Nelson, resulting in higher termination rates.
 
-#---- Analysis 3.4 - Identify the job roles with the highest number of female employees in the city, Vancouver ----
+#---- Analysis 3.4 - Identify the job roles with the highest number of female employees in the city, Vancouver and Fort Nelson in year 2014 ----
 Q3_4 <- function() {
-  # Filter data for Vancouver and group by gender and job title
-  data_filtered <- data %>% 
-    filter(city_name == "Vancouver", gender == "Female") %>% 
+  
+  # Filter out the year of termination date
+  data$termination_year <- year(ymd(data$termination_date))
+  
+  # Filter data for Vancouver & Fort Nelson and group by gender and job title
+  data_filtered_vancouver <- data %>% 
+    filter(city_name == "Vancouver", gender == "Female", termination_year %in% c(2014)) %>% 
+    group_by(gender, job_title) %>% 
+    summarise(count = n(), .groups = "drop")
+  
+  data_filtered_fort_nelson <- data %>% 
+    filter(city_name == "Fort Nelson", gender == "Female", termination_year %in% c(2014)) %>% 
     group_by(gender, job_title) %>% 
     summarise(count = n(), .groups = "drop")
   
   # Order job titles by descending count
-  data_filtered <- data_filtered %>% 
+  data_filtered_vancouver <- data_filtered_vancouver %>% 
     mutate(job_title = fct_reorder(job_title, count, .desc = FALSE))
 
+  data_filtered_fort_nelson <- data_filtered_fort_nelson %>% 
+    mutate(job_title = fct_reorder(job_title, count, .desc = FALSE))
+  
   # Plot stacked bar chart
-  ggplot(data_filtered, aes(x = job_title, y = count, fill = gender)) +
+  vancouver_bar_plot <- ggplot(data_filtered_vancouver, aes(x = job_title, y = count, fill = gender)) +
     geom_bar(stat = "identity") +
     labs(x = "Jobs in Vancouver city", 
-         y = "Number of Employees", 
+         y = "Number of Terminated Employees in year 2014", 
          fill = "Gender") +
     # Flip the coordinates of x & y
     coord_flip() +
     theme(legend.position = "bottom")
+  
+  fort_nelson_bar_plot <- ggplot(data_filtered_fort_nelson, aes(x = job_title, y = count, fill = gender)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Jobs in Fort Nelson city", 
+         y = "Number of Terminated Employees in year 2014", 
+         fill = "Gender") +
+    # Flip the coordinates of x & y
+    coord_flip() +
+    theme(legend.position = "bottom")
+  
+  grid.arrange(vancouver_bar_plot, fort_nelson_bar_plot, ncol = 2)
 }
 Q3_4()
 
 # Explanation:
-# The analysis revealed that the occupation of meat cutter had the highest number of female workers in Vancouver. 
-# This observation is in line with the earlier analysis that identified meat cutter as the job role with the highest number of female employees 
-# who were terminated above the age of 60.
+# The graph suggests that female employees in Vancouver were mostly terminated from their roles as recruiters, whereas in Fort Nelson, 
+# female employees were predominantly terminated from their positions as meat cutters and dairy persons. 
+# This discrepancy in termination rates could potentially be due to gender bias, 
+# where female employees in these industries may be subject to negative stereotypes and be viewed as less capable than their male counterparts, 
+# leading to higher rates of termination.
 
 #------------------------------- Conclusion ------------------------------------
 # Based on the analyses conducted, it can be concluded that there are differences in the number of terminated employees by gender. 
@@ -634,22 +659,24 @@ Q3_4()
 #==============================================================================
 
 #==== Q4. Why has the total number of employees been decreasing since 2013?
-#---- Analysis 4.1 - Find the correlation between employees' generation, job title, and job termination after 2013 ----
+#---- Analysis 4.1 - Find the relationship between department and terminated employee after 2013 ----
 Q4_1 <- function() {
   termination_count <- data %>% 
-    filter(status == "TERMINATED", status_year >= 2013)
-
+    filter(status == "TERMINATED", status_year >= 2013) %>%
+    group_by(department_name, status_year) %>%
+    summarise(count = n(), .groups = "drop")
+  
   # Plot grouped bar chart
-  ggplot(termination_count, aes(x = generation, fill = generation)) +
-  stat_count() +
-  facet_wrap( ~ job_title) +
-  labs(x = "Generation", 
-       y = "Number of Terminated Employees", 
-       fill = "Status") +
-  scale_fill_manual(values = c("Baby Boomers" = "#DD4321", 
-                               "Gen X" = "#0F2199", 
-                               "Millennials" = "#AF3376")) +
-  ggtitle("Employees' Job by Generation")
+  ggplot(termination_count, aes(x = reorder(department_name, -count), y = count)) +
+    geom_col(aes(fill = factor(status_year))) +
+    labs(x = "Department", 
+         y = "Number of Terminated Employees", 
+         fill = "Year") +
+    scale_fill_manual(values = c("2013" = "#DD4321", 
+                                 "2014" = "#0F2199", 
+                                 "2015" = "#AF3376")) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle("Terminated Employees' Job after year 2013")
 }
 Q4_1()
 
@@ -661,60 +688,60 @@ Q4_1()
 
 #---- Analysis 4.2 - Determine the termination reason of different generation employees after 2013 ----
 Q4_2 <- function() {
-  # Filter data for terminated employees after 2013
-  millennials_termination_count <- data %>%
-    filter(status == "TERMINATED", generation == "Millennials", job_title == "Cashier", status_year >= 2013)
   
-  gen_x_termination_count <- data %>%
-    filter(status == "TERMINATED", generation == "Gen X", job_title == "Cashier" | job_title == "Dairy Person", status_year >= 2013)
-  
-  baby_boomers_termination_count <- data %>%
-    filter(status == "TERMINATED", generation == "Baby Boomers", job_title == "Meat Cutter", status_year >= 2013)
-  
-  # Count termination reasons
-  millennials_reason_count <- millennials_termination_count %>%
-    group_by(generation, termination_reason) %>%
+  data_after_2013 <- data %>%
+    filter(status_year >= 2013, status == "ACTIVE") %>%
+    group_by(department_name, generation) %>%
     summarize(count = n(), .groups = 'drop') %>%
-    ungroup()
+    group_by(department_name) %>%
+    mutate(pct = count / sum(count) * 100)
   
-  gen_x_reason_count <- gen_x_termination_count %>%
-    group_by(generation, termination_reason) %>%
+  data_before_2013 <- data %>%
+    filter(status_year < 2013, status == "ACTIVE") %>%
+    group_by(department_name, generation) %>%
     summarize(count = n(), .groups = 'drop') %>%
-    ungroup()
+    group_by(department_name) %>%
+    mutate(pct = count / sum(count) * 100)
   
-  baby_boomers_reason_count <- baby_boomers_termination_count %>%
-    group_by(generation, termination_reason) %>%
-    summarize(count = n(), .groups = 'drop') %>%
-    ungroup()
+  # Filter for departments with more than two generations
+  data_before_2013_filtered <- data_before_2013 %>%
+    group_by(department_name) %>%
+    summarize(num_generations = n_distinct(generation)) %>%
+    filter(num_generations > 2) %>%
+    select(department_name)
   
-  # Create pie chart
-  a <- ggplot(millennials_reason_count, aes(x = generation, y = count, fill = termination_reason)) +
-        geom_bar(stat = "identity", width = 1) +
-        coord_polar(theta = "y") +
-        theme_void() +
-        labs(fill = "Termination Reason") +
-        ggtitle("Count of terminated Millennial \nCashier employees after 2013") +
-        geom_text(aes(label = count), position = position_stack(vjust = 0.5))
+  data_after_2013_filtered <- data_after_2013 %>%
+    group_by(department_name) %>%
+    summarize(num_generations = n_distinct(generation)) %>%
+    filter(num_generations > 2) %>%
+    select(department_name)
   
-  b <- ggplot(gen_x_reason_count, aes(x = generation, y = count, fill = termination_reason)) +
-        geom_bar(stat = "identity", width = 1) +
-        coord_polar(theta = "y") +
-        theme_void() +
-        labs(fill = "Termination Reason") +
-        ggtitle("Termination count of Gen X employees working as Cashiers \nand Dairy Persons after 2013.") +
-        geom_text(aes(label = count), position = position_stack(vjust = 0.5))
+  data_before_2013_filtered <- semi_join(data_before_2013, data_before_2013_filtered, by = "department_name")
+  data_after_2013_filtered <- semi_join(data_after_2013, data_after_2013_filtered, by = "department_name")
   
-  c <- ggplot(baby_boomers_reason_count, aes(x = generation, y = count, fill = termination_reason)) +
-        geom_bar(stat = "identity", width = 1) +
-        coord_polar(theta = "y") +
-        theme_void() +
-        labs(fill = "Termination Reason") +
-        ggtitle("Count of terminated Baby Boomers \nMeat Cutter employees after 2013") +
-        geom_text(aes(label = count), position = position_stack(vjust = 0.5))
-      
-  grid.arrange(a, b, c, ncol=3)
+  # Create the grouped bar chart
+  plot_before_2013 <- ggplot(data_before_2013_filtered, aes(x = department_name, y = pct, fill = generation)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    scale_fill_manual(values = c("#FDB813", "#00A6ED", "#E21F5D", "#1F9433")) +
+    labs(x = "Department", 
+         y = "Percentage of Employees", 
+         fill = "Generation") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle("Percentage of Employees in Each Department by Generation before year 2013")
+  
+  plot_after_2013 <- ggplot(data_after_2013_filtered, aes(x = department_name, y = pct, fill = generation)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    scale_fill_manual(values = c("#FDB813", "#00A6ED", "#E21F5D", "#1F9433")) +
+    labs(x = "Department", 
+         y = "Percentage of Employees", 
+         fill = "Generation") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    ggtitle("Percentage of Employees in Each Department by Generation after year 2013")
+  
+  grid.arrange(plot_before_2013, plot_after_2013, ncol = 2)
 }
 Q4_2()
+
 # Explanation:
 # The high termination rates observed among millennial in the cashier job, gen X in the dairy person and cashier jobs, and baby boomers in the meat cutter job may be attributed to various factors. 
 # Millennial may have left the cashier job to seek better employment opportunities with improved compensation, benefits, and career growth prospects. 
