@@ -721,7 +721,7 @@ Q4_2 <- function() {
   
   # Create the grouped bar chart
   plot_before_2013 <- ggplot(data_before_2013_filtered, aes(x = department_name, y = pct, fill = generation)) +
-    geom_bar(stat = "identity", position = "dodge") +
+    geom_bar(stat = "identity", position = "stack") +
     scale_fill_manual(values = c("#FDB813", "#00A6ED", "#E21F5D", "#1F9433")) +
     labs(x = "Department", 
          y = "Percentage of Employees", 
@@ -730,7 +730,7 @@ Q4_2 <- function() {
     ggtitle("Percentage of Employees in Each Department by Generation before year 2013")
   
   plot_after_2013 <- ggplot(data_after_2013_filtered, aes(x = department_name, y = pct, fill = generation)) +
-    geom_bar(stat = "identity", position = "dodge") +
+    geom_bar(stat = "identity", position = "stack") +
     scale_fill_manual(values = c("#FDB813", "#00A6ED", "#E21F5D", "#1F9433")) +
     labs(x = "Department", 
          y = "Percentage of Employees", 
