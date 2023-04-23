@@ -2,22 +2,14 @@
 # TP067094
 
 #---- Install packages ----
-install.packages("magrittr")
-install.packages("stringr")
-install.packages("tidyverse")
-install.packages("lubridate")
 install.packages("gridExtra")
 install.packages("plotrix")
-install.packages("forcats")
+install.packages("tidyverse")
 
 #---- Load packages ----
-library(tidyverse)      # included library dplyr & ggplot2
-library(magrittr)       # %>%
-library(stringr)        # str_replace()
-library(lubridate)      # ymd(), year()
-library(gridExtra)      # grid.arrange()
-library(plotrix)        # legend
-library(forcats)        # fct_reorder()
+library(gridExtra)          # grid.arrange()
+library(plotrix)            # legend
+library(tidyverse)          # included library readr, dplyr, ggplot2, stringr, forcats, lubridate, magrittr
 
 # Import data by reading csv file
 setwd("C:/Users/bbkx2/Downloads/project/R/PFDA_Assignment")
@@ -29,7 +21,7 @@ data <- read.csv('employee_attrition.csv', header = TRUE, sep = ",")
 # @param data: The data to be explored
 explore_data <- function() {
 
-  # Check number of columns
+  # Check number of rows & columns
   cat("The total no. of columns is", ncol(data),"and the total no. of rows is", nrow(data),"\n")
 
   # Check number of missing values
@@ -213,7 +205,9 @@ third_idea <- function() {
     group_by(status_year, generation) %>%
     summarize(count = n(), .groups = 'drop') %>%
     filter(!is.na(generation)) %>%
-    ungroup() # After grouping the data and summarizing it, remove the grouping structure of the data frame
+    ungroup() 
+    # After grouping the data and summarizing it, 
+    #remove the grouping structure of the data frame
   
   # Plot number of employees in each age group by year using line graph
   ggplot(generation_count, aes(x = status_year, y = count, color = generation)) +
@@ -235,6 +229,7 @@ third_idea()
 # Observation:
 # The number of millennial employees has been increasing year by year
 # Starting from 2013, there appears to be a decline in the total number of employees across all generations.
+# The silent generation disappeared after 2010
 
 # Questions that can be asked:
 # Why has the total number of employees been decreasing since 2013? 
@@ -249,8 +244,9 @@ Q1_1 = function() {
   data_filtered <- data %>% filter(status == "TERMINATED")
   
   # Create the density graph
-  ggplot(data_filtered, aes(x = age, fill = termination_reason)) + 
-  geom_density(alpha = 0.5, outline.type = "upper",adjust = 2) + # Adjust the visibility of the overlapping densities
+  ggplot(data_filtered, aes(x = age, fill = termination_reason)) +
+  # Adjust the visibility of the overlapping densities
+  geom_density(alpha = 0.5, outline.type = "upper",adjust = 2) + 
   labs(title = "Relationship between Employee Age and Termination Reason",
        x = "Employee Age",
        y = "Density",
@@ -271,9 +267,6 @@ Q1_2 = function() {
   
   # filter only the terminated employees
   data_terminated <- filter(data, status == "TERMINATED")
-  
-  # show the list of termination reasons
-  unique(data_terminated$termination_reason) 
   
   # create a bar chart for each job title
   ggplot(data_terminated, aes(x = termination_reason, fill = termination_reason)) + 
@@ -300,7 +293,6 @@ Q1_2()
 # especially for younger employees who may be seeking more challenging and fulfilling work
 
 #---- Analysis 1.3 - Analyze the relationship between length of service and termination reason for cashiers and meat cutters -----
-
 Q1_3 = function() {
   
   # Select only the data for employees who have been terminated and worked as cashier or meat cutter
