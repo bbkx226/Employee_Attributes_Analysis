@@ -2,31 +2,22 @@
 # TP067094
 
 #---- Install packages ----
-install.packages("dplyr")
-install.packages("ggplot2")
 install.packages("magrittr")
 install.packages("stringr")
 install.packages("tidyverse")
 install.packages("lubridate")
 install.packages("gridExtra")
 install.packages("plotrix")
-install.packages("openair")
-install.packages("ggrepel")
 install.packages("forcats")
-install.packages("RColorBrewer")
 
 #---- Load packages ----
-library(dplyr)
-library(ggplot2)
-library(magrittr)
-library(stringr)
-library(tidyverse)
-library(lubridate)
-library(gridExtra)
-library(plotrix)
-library(openair)
-library(ggrepel)
-library(forcats)
+library(tidyverse)      # included library dplyr & ggplot2
+library(magrittr)       # %>%
+library(stringr)        # str_replace()
+library(lubridate)      # ymd(), year()
+library(gridExtra)      # grid.arrange()
+library(plotrix)        # legend
+library(forcats)        # fct_reorder()
 
 # Import data by reading csv file
 setwd("C:/Users/bbkx2/Downloads/project/R/PFDA_Assignment")
@@ -67,13 +58,14 @@ clean_data <- function(data) {
   data[data == ""] <- NA
   
   # Remove unnecessary column
-  data <- select(data, -c("gender_short"))
+  data <- select(data, -c("gender_short", "recorddate_key", "orighiredate_key", 
+                          "store_name", "BUSINESS_UNIT"))
 
   # Renaming column names
-  colnames(data) <- c("employee_ID", "record_date", "birth_date", "hired_date", "termination_date",
-                      "age", "service_count", "city_name", "department_name", "job_title", 
-                      "store_name", "gender", "termination_reason", "termination_type", "status_year", 
-                      "status", "business_unit")
+  colnames(data) <- c("employee_ID", "birth_date", "termination_date", "age", "service_count", "city_name", 
+                      "department_name", "job_title", "gender", "termination_reason", 
+                      "termination_type", "status_year", "status")
+  
   return(data)
 }
 
@@ -87,9 +79,7 @@ preprocess_data <- function(data) {
   data$termination_date = ifelse(data$termination_date == "1/1/1900", NA, data$termination_date)
 
   # Converted to POSIXct (a date/time data type in R) using the specified date format strings
-  data$record_date <- as.POSIXct(data$record_date, format = "%m/%d/%Y %H:%M")
   data$birth_date <- as.POSIXct(data$birth_date, format = "%m/%d/%Y")
-  data$hired_date <- as.POSIXct(data$hired_date, format = "%m/%d/%Y")
   data$termination_date <- as.POSIXct(data$termination_date, format = "%m/%d/%Y")
 
   # Replace typo "resignaton" to "resignation"
@@ -105,16 +95,13 @@ preprocess_data <- function(data) {
   # Converted character type data into factor
   data <- data %>%
     mutate(
-      employee_ID = as.factor(employee_ID),
       city_name = as.factor(city_name),
       department_name = as.factor(department_name),
       job_title = as.factor(job_title),
-      store_name = as.factor(store_name),
       gender = as.factor(gender),
       termination_reason = as.factor(termination_reason),
       termination_type = as.factor(termination_type),
       status = as.factor(status),
-      business_unit = as.factor(business_unit)
     )
   
   # Extract the year from the birth date
