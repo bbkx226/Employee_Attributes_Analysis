@@ -136,7 +136,7 @@ first_idea <- function() {
   termination_by_year_reason <- data %>%
     filter(status == "TERMINATED") %>% # Filter to only terminated employees
     group_by(termination_year, termination_reason) %>% # Group by termination year and termination reason
-    summarise(count = n(), .groups = 'drop') # Summarize number of employees
+    summarize(count = n(), .groups = 'drop') # Summarize number of employees
 
   # create a stacked bar chart
   # specifies the data and the variables to be used for the x and y axes and for color
@@ -364,7 +364,7 @@ Q2_1 = function() {
   data_sub_agg <- data_sub %>% 
     filter(termination_reason == "Layoff") %>% 
     group_by(department_name) %>% 
-    summarise(count = n()) %>%
+    summarize(count = n()) %>%
     ungroup()
   
   # Create a table showing the count of layoffs in each department
@@ -431,17 +431,17 @@ Q2_2()
 # This could be attributed to the advancements in technology and automation, which have resulted in the gradual replacement of human labor with machinery in 
 # industries that are more easily replaceable, such as those represented by the aforementioned job categories.
 
-#---- Analysis 2.3 - Analyze the relationship between employees' generations and employees' gender ----
+#---- Analysis 2.3 - Analyze the correlation among employees' generations, employees' gender and layoffs----
 Q2_3 = function() {
   # summarize the data and store it in a new object
   laid_off_summary <- data %>%
     filter(termination_reason == "Layoff") %>%
     group_by(generation, gender) %>%
-    summarise(num_laid_off = n(), .groups = 'drop')
+    summarize(num_laid_off = n(), .groups = 'drop')
   
   # plot stacked bar chart using the summarized data
   ggplot(laid_off_summary, aes(x=generation, y=num_laid_off, fill=gender)) +
-    geom_bar(stat = "identity", position = ) +
+    geom_bar(stat = "identity", position="stack") +
     labs(x="Age Generation", 
          y="Number of Laid Off Employees",
          fill="Gender") +
@@ -521,7 +521,7 @@ Q3_2 <- function() {
   data_filtered <- data %>%
     filter(age >= 60, termination_year %in% c(2014)) %>%
     group_by(gender, job_title, status) %>%
-    summarise(count = n(), .groups = "drop") %>%
+    summarize(count = n(), .groups = "drop") %>%
     mutate(job_title = fct_reorder(job_title, count, .desc = FALSE))
   
   ggplot(data_filtered, aes(x = job_title, y = count, fill = status)) +
@@ -554,7 +554,7 @@ Q3_3 <- function() {
   # Counting terminated employees by gender and city
   terminated_by_city <- data_filtered %>%
     group_by(gender, city_name) %>%
-    summarise(count = n(), .groups = "drop") %>%
+    summarize(count = n(), .groups = "drop") %>%
     mutate(city_name = fct_reorder(city_name, count, .desc = TRUE))
   
   # Plotting the graph
@@ -582,12 +582,12 @@ Q3_4 <- function() {
   data_filtered_vancouver <- data %>% 
     filter(city_name == "Vancouver", gender == "Female", termination_year %in% c(2014)) %>% 
     group_by(gender, job_title) %>% 
-    summarise(count = n(), .groups = "drop")
+    summarize(count = n(), .groups = "drop")
   
   data_filtered_fort_nelson <- data %>% 
     filter(city_name == "Fort Nelson", gender == "Female", termination_year %in% c(2014)) %>% 
     group_by(gender, job_title) %>% 
-    summarise(count = n(), .groups = "drop")
+    summarize(count = n(), .groups = "drop")
   
   # Order job titles by descending count
   data_filtered_vancouver <- data_filtered_vancouver %>% 
@@ -643,7 +643,7 @@ Q4_1 <- function() {
   termination_count <- data %>% 
     filter(status == "TERMINATED", status_year >= 2013) %>%
     group_by(department_name, status_year) %>%
-    summarise(count = n(), .groups = "drop")
+    summarize(count = n(), .groups = "drop")
   
   # Plot grouped bar chart
   ggplot(termination_count, aes(x = reorder(department_name, -count), y = count)) +
