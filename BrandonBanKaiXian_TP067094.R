@@ -559,14 +559,15 @@ Q3_3 <- function() {
   
   # Plotting the graph
   ggplot(terminated_by_city, aes(x = city_name, y = count, fill = gender)) +
-    geom_bar(stat = "identity", position = "dodge") +
+    geom_dotplot(binaxis='y', stackdir='center', position=position_dodge(0.75), binwidth=1) +
     labs(x = "City", 
-         y = "Count of Terminated Employees", 
-         fill = "Gender") +
+         y = "Count of Terminated Employees") +
+    scale_fill_manual(values=c("red", "blue")) +
     ggtitle("Distribution of Terminated Employees by City and Gender") +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 Q3_3()
+
 
 # Explanation:
 # According to the graph, Vancouver had the highest number of terminated female employees, followed by Fort Nelson. 
@@ -645,7 +646,7 @@ Q4_1 <- function() {
     group_by(department_name, status_year) %>%
     summarize(count = n(), .groups = "drop")
   
-  # Plot grouped bar chart
+  # Plot stacked bar chart
   ggplot(termination_count, aes(x = reorder(department_name, -count), y = count)) +
     geom_col(aes(fill = factor(status_year))) +
     labs(x = "Department", 
@@ -655,17 +656,17 @@ Q4_1 <- function() {
                                  "2014" = "#0F2199", 
                                  "2015" = "#AF3376")) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-    ggtitle("Terminated Employees' Job after year 2013")
+    ggtitle("Jobs termination after year 2013")
 }
 Q4_1()
 
 # Explanation:
-# The cashier job appears to be the most commonly terminated position among millennial and gen X, while meat cutter is the most commonly terminated job among baby boomers. 
-# Additionally, the dairy person job is another position that appears to have a high termination rate among gen X.
-# This trend may be attributed to changes in the retail industry and organizational policies, resulting in a decrease in demand for these positions. 
-# Moreover, employees may have opted for better job opportunities offering higher pay, benefits, and career advancement prospects.
+# The customer service department had the most terminations after 2013, while the audit, compensation, investment, and legal departments had almost none. 
+# This may be due to customer service jobs can be demanding, and employees may need to deal with angry or frustrated customers. 
+# This can lead to high levels of stress and burnout, which may contribute to turnover. 
+# Employees in the audit, compensation, investment, and legal departments may be more satisfied with their work, which could lead to lower turnover rates.
 
-#---- Analysis 4.2 - Determine the termination reason of different generation employees after 2013 ----
+#---- Analysis 4.2 - Determine the percentage of different generation employees in each department before and after year 2013 ----
 Q4_2 <- function() {
   
   data_after_2013 <- data %>%
@@ -722,15 +723,8 @@ Q4_2 <- function() {
 Q4_2()
 
 # Explanation:
-# The high termination rates observed among millennial in the cashier job, gen X in the dairy person and cashier jobs, and baby boomers in the meat cutter job may be attributed to various factors. 
-# Millennial may have left the cashier job to seek better employment opportunities with improved compensation, benefits, and career growth prospects. 
-# Gen X may have experienced job loss due to automation and technological advancements in the industry. 
-# Baby boomers, on the other hand, may have retired due to age or personal preferences for a reduced workload.
 
 #------------------------------- Conclusion ------------------------------------
-# In conclusion, the decrease in total employee count since 2013 varies across different generations. Millennial may have resigned from cashier jobs to 
-# seek better employment opportunities, while gen X may have faced job loss due to automation and technological advancements. 
-# Baby boomers may have opted to retire due to age or personal preferences for a reduced workload.
 
 #==============================================================================
 
@@ -764,23 +758,40 @@ Q5_1()
 
 #---- Analysis 5.2 - Find the relationship between average length of service and departments ----
 Q5_2 <- function() {
+  
   # Group the data by department and calculate the average length of service
   avg_service_dept <- aggregate(data$service, by=list(data$department_name), FUN=mean)
-
+  
   # Rename the columns name
-  names(avg_service_dept) <- c("job_title", "service_count")
-
+  names(avg_service_dept) <- c("department_name", "avg_service_length")
+  
   # Reorder the departments by average service length
   avg_service_dept <- avg_service_dept %>%
-    mutate(job_title = fct_reorder(job_title, service_count, .desc = FALSE))
-
-  # Plot the bar graph
-  ggplot(avg_service_dept, aes(x = job_title, y = service_count, fill = Group.1)) +
-    geom_bar(stat = "summary", fun = "mean", fill = "navy") +
+    mutate(department_name = fct_reorder(department_name, avg_service_length, .desc = FALSE))
+  
+  # Set theme options
+  my_theme <- theme_minimal() +
+    theme(plot.background = element_rect(fill = "#f2f2f2"),
+          panel.background = element_rect(fill = "#f2f2f2"),
+          axis.line = element_line(color = "black"),
+          axis.text = element_text(color = "black", size = 12),
+          axis.title = element_text(color = "black", size = 14),
+          legend.position = "bottom",
+          legend.title = element_blank(),
+          legend.background = element_rect(fill = "#f2f2f2"),
+          panel.grid.major = element_line(color = "white", linewidth = 0.25),
+          panel.grid.minor = element_blank())
+  
+  # Plot the scatter plot with line of best fit
+  ggplot(avg_service_dept, aes(x = department_name, y = avg_service_length)) +
+    geom_point(size = 3, color = "navy") +
+    geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "black") +
     ggtitle("Average Length of Service by Department") +
     labs(x = "Department", 
          y = "Average Length of Service") +
-    coord_cartesian(ylim = c(5, 20)) +
+    scale_y_continuous(limits = c(5, 25), breaks = seq(5, 25, by = 1)) +
+    scale_color_manual(values = "navy", name = "") +
+    my_theme +
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 Q5_2()
