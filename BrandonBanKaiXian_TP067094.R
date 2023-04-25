@@ -409,9 +409,6 @@ Q2_2 = function() {
   # Create each column's name
   names(job_layoff_count) <- c("job_title", "termination_reason", "count")
   
-  # Order the job titles by the count of layoffs in descending order
-  job_layoff_count <- job_layoff_count %>% 
-    mutate(job_title = fct_reorder(job_title, count, .desc = TRUE))
 
   # Create a stacked bar plot
   ggplot(job_layoff_count, aes(job_title, y=count, fill = termination_reason)) +
@@ -723,6 +720,12 @@ Q4_2 <- function() {
 Q4_2()
 
 # Explanation:
+# According to Figure 4.4.5, the composition of employees in the customer service department evolved from before to after 2013 
+# with a decline in Gen X staff and a rise in Millennial staff. 
+# One possible explanation for this transition is that Gen X employees who worked in customer service for an extended period of time 
+# may have become exhausted and stressed, pushing them to choose other career opportunities inside or outside the company. 
+# Customer service, on the other hand, may be interesting to millennial employees in their early stages of employment 
+# due to its ability to strengthen communication and interpersonal skills. 
 
 #------------------------------- Conclusion ------------------------------------
 
@@ -776,6 +779,7 @@ Q5_2 <- function() {
           axis.line = element_line(color = "black"),
           axis.text = element_text(color = "black", size = 12),
           axis.title = element_text(color = "black", size = 14),
+          axis.text.x = element_text(angle = 45, hjust = 1),
           legend.position = "bottom",
           legend.title = element_blank(),
           legend.background = element_rect(fill = "#f2f2f2"),
@@ -791,8 +795,7 @@ Q5_2 <- function() {
          y = "Average Length of Service") +
     scale_y_continuous(limits = c(5, 25), breaks = seq(5, 25, by = 1)) +
     scale_color_manual(values = "navy", name = "") +
-    my_theme +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    my_theme
 }
 Q5_2()
 
@@ -820,7 +823,7 @@ Q5_3 <- function() {
   ggtitle("Average Length of Service by Department") +
   labs(x = "City", 
        y = "Average Length of Service") +
-  coord_cartesian(ylim = c(6, 15)) +
+  coord_cartesian(ylim = c(7, 15)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 Q5_3()
