@@ -245,13 +245,13 @@ Q1_1 = function() {
   
   # Create the density graph
   ggplot(data_filtered, aes(x = age, fill = termination_reason)) +
-  # Adjust the visibility of the overlapping densities
-  geom_density(alpha = 0.5, outline.type = "upper",adjust = 2) + 
-  labs(title = "Relationship between Employee Age and Termination Reason",
-       x = "Employee Age",
-       y = "Density",
-       fill = "Termination Reason") +
-  theme_minimal()
+    # Adjust the visibility of the overlapping densities
+    geom_density(alpha = 0.5, outline.type = "upper",adjust = 2) + 
+    labs(title = "Relationship between Employee Age and Termination Reason",
+         x = "Employee Age",
+         y = "Density",
+         fill = "Termination Reason") +
+    theme_minimal()
 }
 Q1_1()
 
@@ -515,12 +515,16 @@ Q3_2 <- function() {
   # Filter out the year of termination date
   data$termination_year <- year(ymd(data$termination_date))
   
+  # Filter the data based on specific conditions, group by gender, job_title, and status, 
+  # calculate the count of terminated employees for each group, and reorder job titles based on count.
   data_filtered <- data %>%
     filter(age >= 60, termination_year %in% c(2014)) %>%
     group_by(gender, job_title, status) %>%
     summarize(count = n(), .groups = "drop") %>%
     mutate(job_title = fct_reorder(job_title, count, .desc = FALSE))
   
+  # Generate the bar chart using ggplot library, where x-axis is job_title, y-axis is count, 
+  # fill is based on status, and facets are based on gender.
   ggplot(data_filtered, aes(x = job_title, y = count, fill = status)) +
     geom_bar(stat = "identity", position = "stack", color = "black", size = 0.4) +
     labs(x = "Job Title", 
@@ -638,21 +642,27 @@ Q3_4()
 #==== Q4. Why has the total number of employees been decreasing since 2013?
 #---- Analysis 4.1 - Find the relationship between department and terminated employee after 2013 ----
 Q4_1 <- function() {
+  
+  # Filter data for terminated employees since 2013 and group by department and year
   termination_count <- data %>% 
     filter(status == "TERMINATED", status_year >= 2013) %>%
     group_by(department_name, status_year) %>%
     summarize(count = n(), .groups = "drop")
   
-  # Plot stacked bar chart
+  # Generate the stacked bar chart using ggplot library, where x-axis is department name,
+  # y-axis is count, fill is based on year, and departments are reordered based on count.
   ggplot(termination_count, aes(x = reorder(department_name, -count), y = count)) +
     geom_col(aes(fill = factor(status_year))) +
     labs(x = "Department", 
          y = "Number of Terminated Employees", 
          fill = "Year") +
+    # Manually set the fill colors for each year using scale_fill_manual()
     scale_fill_manual(values = c("2013" = "#DD4321", 
                                  "2014" = "#0F2199", 
                                  "2015" = "#AF3376")) +
+    # Rotate the x-axis text by 45 degrees for better readability
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    # Add a title to the chart
     ggtitle("Jobs termination after year 2013")
 }
 Q4_1()
@@ -666,6 +676,7 @@ Q4_1()
 #---- Analysis 4.2 - Determine the percentage of different generation employees in each department before and after year 2013 ----
 Q4_2 <- function() {
   
+  # Filter data for active employees after 2013, group by department and generation and summarize count
   data_after_2013 <- data %>%
     filter(status_year >= 2013, status == "ACTIVE") %>%
     group_by(department_name, generation) %>%
@@ -673,6 +684,7 @@ Q4_2 <- function() {
     group_by(department_name) %>%
     mutate(pct = count / sum(count) * 100)
   
+  # Filter data for active employees before 2013, group by department and generation and summarize count
   data_before_2013 <- data %>%
     filter(status_year < 2013, status == "ACTIVE") %>%
     group_by(department_name, generation) %>%
@@ -680,7 +692,7 @@ Q4_2 <- function() {
     group_by(department_name) %>%
     mutate(pct = count / sum(count) * 100)
   
-  # Filter for departments with more than two generations
+  # Filter departments with more than two generations
   data_before_2013_filtered <- data_before_2013 %>%
     group_by(department_name) %>%
     summarize(num_generations = n_distinct(generation)) %>%
@@ -693,10 +705,11 @@ Q4_2 <- function() {
     filter(num_generations > 2) %>%
     select(department_name)
   
+  # Join filtered data with department names to keep only relevant departments
   data_before_2013_filtered <- semi_join(data_before_2013, data_before_2013_filtered, by = "department_name")
   data_after_2013_filtered <- semi_join(data_after_2013, data_after_2013_filtered, by = "department_name")
   
-  # Create the grouped bar chart
+  # Create the grouped bar chart for before 2013
   plot_before_2013 <- ggplot(data_before_2013_filtered, aes(x = department_name, y = pct, fill = generation)) +
     geom_bar(stat = "identity", position = "stack") +
     scale_fill_manual(values = c("#FDB813", "#00A6ED", "#E21F5D", "#1F9433")) +
@@ -706,6 +719,7 @@ Q4_2 <- function() {
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     ggtitle("Percentage of Employees in Each Department by Generation before year 2013")
   
+  # Create the grouped bar chart for after 2013
   plot_after_2013 <- ggplot(data_after_2013_filtered, aes(x = department_name, y = pct, fill = generation)) +
     geom_bar(stat = "identity", position = "stack") +
     scale_fill_manual(values = c("#FDB813", "#00A6ED", "#E21F5D", "#1F9433")) +
@@ -715,6 +729,7 @@ Q4_2 <- function() {
     theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
     ggtitle("Percentage of Employees in Each Department by Generation after year 2013")
   
+  # Create the grouped bar chart for after 2013
   grid.arrange(plot_before_2013, plot_after_2013, ncol = 2)
 }
 Q4_2()
@@ -728,6 +743,11 @@ Q4_2()
 # due to its ability to strengthen communication and interpersonal skills. 
 
 #------------------------------- Conclusion ------------------------------------
+# In conclusion, the decline in total employees since 2013 can be linked to high turnover rates in the customer service department, as well as a shift in workforce makeup in this area. 
+# The hard nature of customer service professions, which sometimes requires dealing with problematic clients and can lead to burnout and stress, may contribute to the department's high turnover rates. 
+# Moreover, the decline in Gen X staff and the rise in Millennial staff in the customer service department suggest that the appeal of this department varies by generation. 
+# While Gen X employees may have become exhausted and stressed from working in customer service for an extended period of time, Millennial employees may find this department interesting due to its ability to strengthen communication and interpersonal skills. 
+# The transition in staff typifies how workforce dynamics can change over time with generational shifts.
 
 #==============================================================================
 
