@@ -50,13 +50,12 @@ clean_data <- function(data) {
   data[data == ""] <- NA
   
   # Remove unnecessary column
-  data <- select(data, -c("gender_short", "recorddate_key", "orighiredate_key", 
-                          "store_name", "BUSINESS_UNIT"))
+  data <- select(data, -c("gender_short", "recorddate_key", "orighiredate_key"))
 
   # Renaming column names
   colnames(data) <- c("employee_ID", "birth_date", "termination_date", "age", "service_count", "city_name", 
-                      "department_name", "job_title", "gender", "termination_reason", 
-                      "termination_type", "status_year", "status")
+                      "department_name", "job_title", "store_name", "gender", "termination_reason", 
+                      "termination_type", "status_year", "status", "business_unit")
   
   return(data)
 }
@@ -90,15 +89,17 @@ preprocess_data <- function(data) {
       city_name = as.factor(city_name),
       department_name = as.factor(department_name),
       job_title = as.factor(job_title),
+      store_name = as.factor(store_name),
       gender = as.factor(gender),
       termination_reason = as.factor(termination_reason),
       termination_type = as.factor(termination_type),
       status = as.factor(status),
+      business_unit = as.factor(business_unit),
     )
   
   # Extract the year from the birth date
   data$birth_year <- year(ymd(data$birth_date))
-  
+
   # This code creates a new variable generation based on the birth_year variable
   # The generation variable categorizes the different birth years into five different groups
   # The first group is the Silent Generation, the second group is the Baby Boomers, 
@@ -342,6 +343,91 @@ Q1_3()
 # The job of meat cutter demands a particular skill set and expertise, which suggests that it may take a considerable amount of time (usually 2-5 years) for them to attain the required level of proficiency. 
 # This factor could be one of the reasons behind the higher retirement rate among meat cutters after serving for a longer duration.
 
+#---- Analysis 1.4 - Analyze the distribution of termination reasons across different departments----
+Q1_4 = function() {
+  
+  data <- filter(data, status == "TERMINATED")
+  
+  # Calculate the count of termination reasons by department
+  termination_counts <- data %>%
+    group_by(department_name, termination_reason) %>%
+    summarise(count = n(), .groups = 'drop') %>%
+    mutate(department_name = fct_reorder(department_name, count, .desc = TRUE))
+  
+  # Create the bar plot
+  ggplot(termination_counts, aes(x = department_name, y = count, fill = termination_reason)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Department", y = "Count", fill = "Termination Reason") +
+    ggtitle("Distribution of Termination Reasons across Departments") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 14, face = "bold"),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "bottom")
+
+}
+Q1_4()
+#---- Analysis 1.5 - Investigate if there is a correlation between employee age and termination type ----
+Q1_5 = function() {
+  
+  # Filter the terminated employees data
+  terminated_data <- filter(data, status == "TERMINATED")
+  
+  # Create the box plot
+  ggplot(terminated_data, aes(x = termination_type, y = age)) +
+    geom_boxplot() +
+    labs(x = "Termination Type", y = "Employee Age") +
+    ggtitle("Correlation between Employee Age and Termination Type") +
+    scale_y_continuous(limits = c(15, 66), breaks = seq(15, 66, by = 2)) +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 14, face = "bold"),
+          legend.position = "none")
+}
+Q1_5()
+#---- Analysis 1.6 - Compare the average length of service for terminated employees across different termination reasons ----
+Q1_6 = function() {
+  
+  # Filter the terminated employees data
+  terminated_data <- filter(data, status == "TERMINATED")
+  
+  # Calculate the average length of service by termination reason
+  avg_service_length <- terminated_data %>%
+    group_by(termination_reason) %>%
+    summarise(avg_length_of_service = mean(service_count), .groups = 'drop') %>%
+    arrange(desc(avg_length_of_service))
+  
+  # Create the bar plot
+  ggplot(avg_service_length, aes(x = termination_reason, y = avg_length_of_service)) +
+    geom_bar(stat = "identity", fill = "steelblue") +
+    labs(x = "Termination Reason", y = "Average Length of Service") +
+    scale_y_continuous(limits = c(0, 15), breaks = seq(0, 15, by = 1))+
+    ggtitle("Average Length of Service for Terminated Employees by Termination Reason") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 14, face = "bold"))
+}
+Q1_6()
+#---- Analysis 1.7 - Examine the relationship between termination reasons and gender ----
+Q1_7 = function() {
+  
+  # Filter the terminated employees data
+  terminated_data <- filter(data, status == "TERMINATED")
+  
+  # Calculate the count of termination reasons by gender
+  termination_counts <- terminated_data %>%
+    group_by(termination_reason, gender) %>%
+    summarise(count = n(), .groups = 'drop')
+  
+  # Create the stacked bar plot
+  ggplot(termination_counts, aes(x = termination_reason, y = count, fill = gender)) +
+    geom_bar(stat = "identity") +
+    scale_y_continuous(limits = c(0, 900), breaks = seq(0, 900, by = 50))+
+    labs(x = "Termination Reason", y = "Count", fill = "Gender") +
+    ggtitle("Relationship between Termination Reasons and Gender") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 14, face = "bold"),
+          legend.position = "bottom")
+}
+Q1_7()
+
 #------------------------------- Conclusion -----------------------------------
 # In conclusion, the factors associated with employee termination can be attributed to various reasons based on age, occupation, and job demands. 
 # Employees aged 60 and above are more likely to retire, while those between 20 and 35 are more likely to resign due to exploring other career opportunities, 
@@ -456,6 +542,33 @@ Q2_3()
 # Many members of the Silent Generation are retired and not actively participating in the workforce. 
 # This could result in them being less affected by layoffs compared to other generations.
 
+#---- Analysis 2.4 - Examine if there are any specific departments or locations that experienced a higher number of layoffs ----
+Q2_4 = function() {
+  
+  # Filter the terminated employees data for layoffs
+  layoffs_data <- filter(data, termination_reason == "Layoff")
+  
+  # Count the number of layoffs by department and location
+  layoffs_counts <- layoffs_data %>%
+    group_by(department_name, city_name) %>%
+    summarise(count = n(), .groups = 'drop')
+  
+  # Sort the data in descending order by count
+  layoffs_counts <- layoffs_counts %>%
+    arrange(desc(count))
+  
+  # Create the bar plot
+  ggplot(layoffs_counts, aes(x = department_name, y = count, fill = city_name)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(x = "Department", y = "Number of Layoffs", fill = "Location") +
+    ggtitle("Number of Layoffs by Department and Cities") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 14, face = "bold"),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "bottom")
+}
+Q2_4()
+
 #------------------------------- Conclusion ------------------------------------
 # Based on the analysis, it can be concluded that several factors contributed to the high rate of employee layoffs. 
 # Customer service and job categories such as cashier and dairy person have been hit the hardest due to the ease of outsourcing or automation. 
@@ -542,7 +655,7 @@ Q3_2()
 # Additionally, it was observed that there were only a little numbers of male employees aged 60 in 2014, 
 # possibly due to a retirement or layoff program that targeted male employees in this age group. 
 
-#---- Analysis 3.3 - Find the relationship between city and employees' termination in year 2014 ----
+#---- Analysis 3.3 - Find the relationship between city and employees' termination in year 2014, categorized by gender ----
 Q3_3 <- function() {
   
   # Filter out the year of termination date
@@ -627,6 +740,68 @@ Q3_4()
 # This discrepancy in termination rates could potentially be due to gender bias, 
 # where female employees in these industries may be subject to negative stereotypes and be viewed as less capable than their male counterparts, 
 # leading to higher rates of termination.
+
+#---- Analysis 3.5 - Calculate the total number of terminated employees in 2014 and compare it by gender ----
+Q3_5 = function() {
+  
+  # Filter the terminated employees data for the year 2014
+  terminated_2014 <- filter(data, year(termination_date) == 2014)
+  
+  # Calculate the total number of terminated employees by gender
+  terminated_counts <- terminated_2014 %>%
+    group_by(gender) %>%
+    summarise(total_terminated = n())
+  
+  # Create the bar plot
+  ggplot(terminated_counts, aes(x = gender, y = total_terminated, fill = gender)) +
+    geom_bar(stat = "identity", width = 0.5) +
+    scale_y_continuous(limits = c(0, 1100), breaks = seq(0, 1100, by = 50)) +
+    labs(x = "Gender", y = "Total Terminated Employees", fill = "Gender") +
+    ggtitle("Total Terminated Employees in 2014 by Gender") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 14, face = "bold"),
+          legend.position = "none")
+}
+Q3_5()
+
+#---- Analysis 3.6 - Investigate if there is a correlation between gender and the length of service for terminated employees in 2014 ----
+Q3_6 = function() {
+  # Filter the terminated employees data for the year 2014
+  terminated_2014 <- filter(data, year(termination_date) == 2014)
+  
+  # Create the violin plot
+  ggplot(terminated_2014, aes(x = gender, y = service_count, fill = gender)) +
+    geom_violin() +
+    labs(x = "Gender", y = "Length of Service", 
+         title = "Correlation between Gender and Length of Service for Terminated Employees in 2014") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 14, face = "bold"),
+          legend.position = "none")
+}
+Q3_6()
+
+#---- Analysis 3.7 - Examine if there are any gender disparities in termination rates across different departments in 2014 ----
+Q3_7 = function() {
+  
+  # Filter the terminated employees data for the year 2014
+  terminated_2014 <- filter(data, year(termination_date) == 2014)
+  
+  # Calculate the termination counts by gender and department
+  termination_counts <- terminated_2014 %>%
+    group_by(department_name, gender) %>%
+    summarise(count = n(), .groups = 'drop')
+  
+  # Create the stacked bar plot
+  ggplot(termination_counts, aes(x = department_name, y = count, fill = gender)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Department", y = "Termination Count", fill = "Gender") +
+    ggtitle("Termination Rates by Gender and Department in 2014") +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 14, face = "bold"),
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "bottom")
+}
+Q3_7()
 
 #------------------------------- Conclusion ------------------------------------
 # Based on the analyses conducted, it can be concluded that there are differences in the number of terminated employees by gender. 
@@ -742,6 +917,106 @@ Q4_2()
 # Customer service, on the other hand, may be interesting to millennial employees in their early stages of employment 
 # due to its ability to strengthen communication and interpersonal skills. 
 
+#---- Analysis 4.3 - Examine the distribution of termination reasons for employees who left after 2013 to identify if there is a dominant reason contributing to the decrease ----
+Q4_3 <- function() {
+  
+  # Filter data for employees who left after 2013
+  terminated_after_2013 <- data %>%
+    filter(termination_date > as.Date("2013-01-01"), status == "TERMINATED")
+  
+  # Count the frequency of each termination reason
+  termination_reason_counts <- terminated_after_2013 %>%
+    count(termination_reason)
+  
+  # Sort termination reasons by frequency in descending order
+  termination_reason_counts <- termination_reason_counts %>%
+    arrange(desc(n))
+  
+  # Create a lollipop plot
+  ggplot(termination_reason_counts, aes(x = termination_reason, y = n)) +
+    geom_segment(aes(xend = termination_reason, yend = 0), color = "darkblue", size = 1.5) +
+    geom_point(size = 3, color = "darkblue") +
+    labs(x = "Termination Reason", y = "Frequency", title = "Distribution of Termination Reasons\n(For Employees Who Left After 2013)") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    coord_flip()
+  
+}
+Q4_3()
+#---- Analysis 4.4 - Investigate the average length of service for terminated employees after 2013 and compare it to previous years to determine if there is a change in employee retention ----
+Q4_4 <- function() {
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Filter data for terminated employees after 2013
+  terminated_after_2013 <- data %>%
+    filter(termination_date > as.Date("2013-01-01"), status == "TERMINATED")
+  
+  # Calculate average length of service by year
+  average_service_length <- terminated_after_2013 %>%
+    group_by(year = termination_year) %>%
+    summarize(avg_service_length = mean(length_of_service))
+  
+  # Create bar plot
+  ggplot(average_service_length, aes(x = year, y = avg_service_length)) +
+    geom_bar(stat = "identity", fill = "darkblue") +
+    geom_text(aes(label = round(avg_service_length, 2)), vjust = -0.5, color = "white") +
+    labs(x = "Year", y = "Average Length of Service", title = "Average Length of Service for Terminated Employees\n(After 2013)") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+
+Q4_4()
+
+#---- Analysis 4.5 - Investigate whether there are any differences in the gender distribution of terminated employees after 2013 compared to previous years ----
+Q4_5 <- function() {
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Create a variable to identify the time period (after 2013 or previous years)
+  data$termination_period <- ifelse(data$termination_year > 2013, "After 2013", "Previous Years")
+  
+  # Filter data for terminated employees
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED")
+  
+  # Calculate the proportion of terminated employees by gender and time period
+  gender_distribution <- terminated_employees %>%
+    group_by(gender, termination_period) %>%
+    summarize(count = n(), .groups = 'drop') %>%
+    mutate(prop = count / sum(count))
+  
+  # Create Grouped Bar Plot
+  ggplot(gender_distribution, aes(x = termination_period, y = prop, fill = gender)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    labs(x = "Time Period", y = "Proportion", title = "Gender Distribution of Terminated Employees") +
+    scale_fill_manual(values = c("darkblue", "darkred"), labels = c("Male", "Female")) +
+    theme_minimal() +
+    theme(legend.position = "top")
+}
+Q4_5()
+
+#---- Analysis 4.6 - Analyze the age distribution of terminated employees after 2013 and compare it to previous years to identify if there are any age-related factors contributing to the decrease ----
+Q4_6 <- function() {
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Create a variable to identify the time period (after 2013 or previous years)
+  data$termination_period <- ifelse(data$termination_year > 2013, "After 2013", "Previous Years")
+  
+  # Filter data for terminated employees
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED")
+  
+  # Create a density plot for age distribution
+  ggplot(terminated_employees, aes(x = age, fill = termination_period)) +
+    geom_density(alpha = 0.5) +
+    labs(x = "Age", y = "Density", title = "Age Distribution of Terminated Employees") +
+    scale_fill_manual(values = c("darkblue", "darkred"), labels = c("After 2013", "Previous Years")) +
+    theme_minimal()
+}
+Q4_6()
+
 #------------------------------- Conclusion ------------------------------------
 # In conclusion, the decline in total employees since 2013 can be linked to high turnover rates in the customer service department, as well as a shift in workforce makeup in this area. 
 # The hard nature of customer service professions, which sometimes requires dealing with problematic clients and can lead to burnout and stress, may contribute to the department's high turnover rates. 
@@ -777,7 +1052,7 @@ Q5_1()
 # The trend of the average length of service shows a decline from 2009 to 2011, 
 # possibly due to the global recession leading to higher termination rates and shorter service periods for terminated employees.
 # However, from 2011 to 2015, there was a rapid increase in the average length of service, 
-# which may be attributed to the economic recovery and increased hiring during that period.
+# which may be attributed to the economic recovery and increased hiring during that period
 
 #---- Analysis 5.2 - Find the relationship between average length of service and departments ----
 Q5_2 <- function() {
@@ -853,9 +1128,110 @@ Q5_3()
 # this may be that the company in this city may have a strong presence and good reputation in the community, 
 # leading to higher job satisfaction and loyalty among employees.
 
+
+#==== Q6.   
 #------------------------------- Conclusion -----------------------------------
 # The average length of service for terminated employees varies significantly depending on the year, department, and city. 
 # By analyzing these variations, companies can gain valuable insights into factors that contribute to employee retention and 
 # implement strategies to improve employee loyalty and reduce turnover rates.
 
 #==============================================================================
+
+#==== Q6. Are there any specific cities, business unit or store locations with a higher rate of employee termination? ====
+#---- Analysis 6.1 - Analyze the termination rate in different cities and store name ----
+Q6_1 <- function() {
+  
+  # Filter data for terminated employees
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED")
+  
+  # Calculate termination rate and count by city and store location
+  termination_data <- terminated_employees %>%
+    group_by(city_name, store_name) %>%
+    summarize(termination_rate = n() / nrow(data),
+              termination_count = n(), .groups = 'drop')
+  
+  # Create bubble plot
+  ggplot(termination_data, aes(x = city_name, y = store_name, size = termination_count, fill = termination_rate)) +
+    geom_point(shape = 21, color = "black") +
+    scale_size_continuous(range = c(2, 10)) +
+    scale_fill_gradient(low = "lightblue", high = "darkblue") +
+    labs(x = "City", y = "Store Name", title = "Termination Rate in Different Cities and Store Locations") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+Q6_1()
+
+#---- Analysis 6.2 - Identify the cities or store locations with the highest number of terminated employees. ----
+Q6_2 <- function() {
+  
+  # Filter data for terminated employees
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED")
+  
+  # Calculate the count of terminated employees by city and store location
+  termination_counts <- terminated_employees %>%
+    count(city_name, store_name)
+  
+  # Sort the termination counts in descending order
+  termination_counts <- termination_counts %>%
+    arrange(desc(n))
+  
+  # Create bar plot
+  ggplot(termination_counts, aes(x = reorder(city_name, -n), y = n, fill = store_name)) +
+    geom_bar(stat = "identity") +
+    labs(x = "City", y = "Termination Count", title = "Cities with Highest Number of Terminated Employees") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "top")
+  
+}
+Q6_2()
+
+#---- Analysis 6.3 - Examine the distribution of terminated employees across different business units ----
+Q6_3 <- function() {
+  # Filter data for terminated employees
+  terminated_employees <- data %>% filter(status == "TERMINATED")
+  
+  # Create a violin plot for business unit distribution
+  ggplot(terminated_employees, aes(x = business_unit, y = age, fill = business_unit)) +
+    geom_violin(trim = FALSE) +
+    scale_fill_discrete(guide = FALSE) +
+    labs(x = "Business Unit", y = "Age", title = "Distribution of Terminated Employees Across Business Units") +
+    theme_minimal() +
+    theme(legend.position = "none")
+}
+
+Q6_3()
+
+#---- Analysis 6.4 - Examine the trend of employee termination rates over time for Vancouver city ----
+Q6_4 <- function() {
+  
+  city <- "Vancouver"
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Filter data for terminated employees in the specific city
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED" & city_name == city)
+  
+  # Calculate the termination rates by year
+  termination_rates <- terminated_employees %>%
+    group_by(termination_year) %>%
+    summarize(termination_count = n()) %>%
+    mutate(termination_rate = termination_count / sum(termination_count))
+
+  # Create a stacked bar plot
+  ggplot(termination_rates, aes(x = termination_year, y = termination_rate)) +
+    geom_bar(stat = "identity", fill = "#3399FF", color = "black", width = 0.6) +
+    labs(x = "Termination Year", y = "Termination Rate", title = paste("Termination Rate Trend for", city)) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.title = element_text(size = 12, face = "bold"),
+      axis.text = element_text(size = 10),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+    )
+}
+Q6_4()
+
