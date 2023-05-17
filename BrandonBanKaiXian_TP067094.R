@@ -405,6 +405,7 @@ Q1_6 = function() {
     theme(plot.title = element_text(size = 14, face = "bold"))
 }
 Q1_6()
+
 #---- Analysis 1.7 - Examine the relationship between termination reasons and gender ----
 Q1_7 = function() {
   
@@ -1026,7 +1027,7 @@ Q4_6()
 
 #==============================================================================
 
-#==== Q5. What is the average length of service for terminated employees? Does this vary by department or city? ====
+#==== Q5. How does the average length of service vary among terminated employees? ====
 #---- Analysis 5.1 - Determine the average length of service by year ----
 Q5_1 <- function() {
   # Filter for terminated employees
@@ -1128,8 +1129,67 @@ Q5_3()
 # this may be that the company in this city may have a strong presence and good reputation in the community, 
 # leading to higher job satisfaction and loyalty among employees.
 
+#---- Analysis 5.4 - Determine the average length of service by gender ----
+Q5_4 <- function() {
+  
+  # Filter for terminated employees
+  term_data <- data %>%
+    filter(status == "TERMINATED")
+  
+  # Calculate average length of service by gender
+  service_by_gender <- term_data %>%
+    group_by(gender) %>%
+    summarize(avg_service = mean(service_count))
+  
+  # Plot the bar chart
+  ggplot(service_by_gender, aes(x = gender, y = avg_service, fill = gender)) +
+    geom_bar(stat = "identity", width = 0.5) +
+    labs(x = "Gender",
+         y = "Average Length of Service (years)",
+         title = "Average Length of Service for Terminated Employees by Gender") +
+    scale_fill_manual(values = c("#FF6F61", "#8E8E93")) +
+    theme_minimal()
+}
+Q5_4()
 
-#==== Q6.   
+#---- Analysis 5.5 - Analyse average length of service by business unit ----
+Q5_5 <- function() {
+  # Calculate average length of service by business unit
+  avg_service_by_unit <- data %>%
+    group_by(business_unit) %>%
+    summarize(avg_service = mean(service_count))
+  
+  # Sort business units by average service length in descending order
+  avg_service_by_unit <- avg_service_by_unit %>%
+    arrange(desc(avg_service))
+  
+  # Create a bar plot with average length of service by business unit
+  ggplot(avg_service_by_unit, aes(x = reorder(business_unit, avg_service), y = avg_service)) +
+    geom_bar(stat = "identity", fill = "#0077B5", width = 0.5) +
+    labs(x = "Business Unit",
+         y = "Average Length of Service",
+         title = "Average Length of Service by Business Unit") +
+    theme_minimal()
+}
+Q5_5()
+
+#---- Analysis 5.6 - Investigate average length of service by stores name ----
+Q5_6 <- function() {
+  # Calculate average length of service by store
+  avg_service_by_store <- data %>%
+    group_by(store_name) %>%
+    summarize(avg_service = mean(service_count),
+              std_service = sd(service_count))
+  
+  # Create a bar plot with error bars
+  ggplot(avg_service_by_store, aes(x = store_name, y = avg_service, fill = store_name)) +
+    geom_bar(stat = "identity", color = "black", width = 0.6) +
+    labs(x = "Store",
+         y = "Average Length of Service",
+         title = "Average Length of Service by Store") +
+    theme_minimal()
+}
+Q5_6()
 #------------------------------- Conclusion -----------------------------------
 # The average length of service for terminated employees varies significantly depending on the year, department, and city. 
 # By analyzing these variations, companies can gain valuable insights into factors that contribute to employee retention and 
@@ -1235,3 +1295,530 @@ Q6_4 <- function() {
 }
 Q6_4()
 
+#---- Analysis 6.5 - Determine the trend of employee termination rates over time for Victoria city ----
+Q6_5 <- function() {
+  
+  city <- "Victoria"
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Filter data for terminated employees in the specific city
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED" & city_name == city)
+  
+  # Calculate the termination rates by year
+  termination_rates <- terminated_employees %>%
+    group_by(termination_year) %>%
+    summarize(termination_count = n()) %>%
+    mutate(termination_rate = termination_count / sum(termination_count))
+  
+  # Create a point plot with lines connecting the points
+  ggplot(termination_rates, aes(x = termination_year, y = termination_rate)) +
+    geom_point(color = "#3399FF", size = 3) +
+    labs(x = "Termination Year", y = "Termination Rate", title = paste("Termination Rate Trend for", city)) +
+    theme_minimal() +
+    theme(
+      legend.position = "none",
+      axis.title = element_text(size = 12, face = "bold"),
+      axis.text = element_text(size = 10),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+    )
+}
+Q6_5()
+
+#---- Analysis 6.6 - Analyse the trend of employee termination rates over time for Nanaimo city ----
+Q6_6 <- function() {
+  
+  city <- "Nanaimo"
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Filter data for terminated employees in the specific city
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED" & city_name == city)
+  
+  # Calculate the termination rates by year
+  termination_rates <- terminated_employees %>%
+    group_by(termination_year) %>%
+    summarize(termination_count = n()) %>%
+    mutate(termination_rate = termination_count / sum(termination_count))
+  
+  # Create a bar plot
+  ggplot(termination_rates, aes(x = termination_year, y = termination_rate, fill = termination_year)) +
+    geom_bar(stat="identity", position = "dodge", color = "black") +
+    labs(x = "Termination Year", y = "Termination Rate", title = paste("Termination Rate Trend for", city)) +
+    theme_minimal() +
+    theme(
+      legend.title = element_blank(),
+      legend.position = "bottom",
+      axis.title = element_text(size = 12, face = "bold"),
+      axis.text = element_text(size = 10),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+    )
+}
+Q6_6()
+
+#---- Analysis 6.7 - Trend Analysis of Employee Termination Rates over Time for the Stores Business Unit ----
+Q6_7 <- function() {
+  
+  unit <- "STORES"
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Filter data for terminated employees in the specific business_unit
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED" & business_unit == unit)
+  
+  # Calculate the termination rates by year
+  termination_rates <- terminated_employees %>%
+    group_by(termination_year) %>%
+    summarize(termination_count = n()) %>%
+    mutate(termination_rate = termination_count / sum(termination_count))
+  
+  # Create a line plot
+  ggplot(termination_rates, aes(x = termination_year, y = termination_rate, color = termination_year)) +
+    geom_line() +
+    geom_point(size = 3) +
+    labs(x = "Termination Year", y = "Termination Rate", title = paste("Termination Rate Trend for", unit)) +
+    theme_minimal() +
+    theme(
+      legend.title = element_blank(),
+      legend.position = "bottom",
+      axis.title = element_text(size = 12, face = "bold"),
+      axis.text = element_text(size = 10),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+    )
+}
+Q6_7()
+
+#---- Analysis 6.8 - Analysis of Employee Termination Rate Trends Over Time for Store 35 ----
+Q6_8 <- function() {
+  
+  unit <- "35"
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Filter data for terminated employees in the specific business_unit
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED" & store_name == unit)
+  
+  # Calculate the termination rates by year
+  termination_rates <- terminated_employees %>%
+    group_by(termination_year) %>%
+    summarize(termination_count = n()) %>%
+    mutate(termination_rate = termination_count / sum(termination_count))
+  
+  # Create a bar plot
+  ggplot(termination_rates, aes(x = termination_year, y = termination_rate, fill = termination_year)) +
+    geom_bar(stat="identity", position = "dodge", color = "black") +
+    labs(x = "Termination Year", y = "Termination Rate", title = paste("Termination Rate Trend for Store", unit)) +
+    theme_minimal() +
+    theme(
+      legend.title = element_blank(),
+      legend.position = "bottom",
+      axis.title = element_text(size = 12, face = "bold"),
+      axis.text = element_text(size = 10),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+    )
+}
+Q6_8()
+
+#---- Analysis 6.9 - Exploring the Trend of Employee Termination Rates over Time for Store 37 ----
+Q6_9 <- function() {
+  
+  unit <- "37"
+  
+  data$termination_year <- format(data$termination_date, "%Y")
+  
+  # Filter data for terminated employees in the specific business_unit
+  terminated_employees <- data %>%
+    filter(status == "TERMINATED" & store_name == unit)
+  
+  # Calculate the termination rates by year
+  termination_rates <- terminated_employees %>%
+    group_by(termination_year) %>%
+    summarize(termination_count = n()) %>%
+    mutate(termination_rate = termination_count / sum(termination_count))
+  
+  # Create a stacked bar chart with custom colors
+  ggplot(termination_rates, aes(x = termination_year, y = termination_rate, fill = termination_year)) +
+    geom_bar(stat="identity", width = 0.7, color = "black") +
+    scale_fill_manual(values = c("#F9C74F", "#90BE6D", "#F94144", "#F8961E", "#8CCE3F", 
+                                 "#4D4D4D", "#3D405B", "#FFC107", "#5E35B1", "#EC407A")) +
+    labs(x = "Termination Year", y = "Termination Rate", title = paste("Termination Rate Trend for Store", unit)) +
+    theme_classic() +
+    theme(
+      legend.title = element_blank(),
+      legend.position = "bottom",
+      axis.title = element_text(size = 12, face = "bold"),
+      axis.text = element_text(size = 10),
+      plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+    )
+}
+Q6_9()
+
+#==============================================================================
+
+#==== Q7. How does the age generation impact employee termination? ====
+
+#---- Analysis 7.1 - Analyze the proportion of different generations within each department ----
+Q7_1 <- function() {
+  
+  # Subset data
+  generation_dept <- data[, c("department_name", "generation")]
+  
+  # Calculate proportion of each generation within each department
+  generation_prop <- prop.table(table(generation_dept$department_name, generation_dept$generation), margin = 1)
+  
+  # Reshape data for plotting
+  generation_prop <- as.data.frame(generation_prop)
+  generation_prop$Var1 <- as.character(generation_prop$Var1)
+  generation_prop$Var2 <- as.character(generation_prop$Var2)
+  
+  # Create stacked bar plot
+  ggplot(generation_prop, aes(x = Var1, y = Freq, fill = Var2)) +
+    geom_bar(stat = "identity") +
+    labs(x = "Department", y = "Proportion", fill = "Generation") +
+    ggtitle("Proportion of Generations within Each Department") +
+    theme_bw() +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      legend.position = "right"
+    )
+}
+Q7_1()
+
+#---- Analysis 7.2 - Identify the departments with the highest representation of each generation ----
+Q7_2 <- function() {
+  
+  # Group the data by age generation and termination reason and calculate the count
+  termination_reasons <- data %>%
+    filter(status == "TERMINATED", !is.na(generation)) %>%
+    group_by(generation, termination_reason) %>%
+    summarise(count = n(), .groups = 'drop') %>%
+    ungroup()
+  
+  # Set the order of termination reasons for better readability
+  termination_reasons$termination_reason <- factor(termination_reasons$termination_reason, 
+                                                   levels = c("Resignation", "Layoff", "Retirement"))
+  
+  # Create the bar plot
+  plot <- ggplot(termination_reasons, aes(x = generation, y = count, fill = termination_reason)) +
+    geom_bar(stat = "identity", position = "fill") +
+    labs(title = "Distribution of Termination Reasons by Age Generation",
+         x = "Age Generation",
+         y = "Frequency",
+         fill = "Termination Reason") +
+    scale_fill_manual(values = c("#FFB74D", "#4DB6AC", "#FF7043"),
+                      labels = c("Resignation", "Layoff", "Retirement")) +
+    theme_minimal()
+  
+  # Adjust the plot's appearance for better readability and design
+  plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+}
+Q7_2()
+
+#---- Analysis 7.3 - Analyze the length of service by age generation and termination reason ----
+Q7_3 <- function() {
+  
+  # Filter the data for terminated employees and relevant variables
+  terminated_data <- data %>%
+    filter(status == "TERMINATED", !is.na(generation), generation != "The Silent Generation") %>%
+    select(generation, termination_reason, service_count)
+  
+  # Create the boxplot
+  plot <- ggplot(terminated_data, aes(x = generation, y = service_count, fill = termination_reason)) +
+    geom_boxplot() +
+    labs(title = "Length of Service by Age Generation and Termination Reason",
+         x = "Age Generation",
+         y = "Length of Service",
+         fill = "Termination Reason") +
+    scale_y_continuous(limits = c(0, 30), breaks = seq(0, 30, by = 1)) +
+    scale_fill_manual(values = c("#FFB74D", "#4DB6AC", "#FF7043"),
+                      labels = c("Resignation", "Layoff", "Retirement")) +
+    theme_minimal()
+  
+  # Adjust the plot's appearance for better readability and design
+  plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+}
+Q7_3()
+
+#---- Analysis 7.4 - Analyse the termination rate by age generation ----
+Q7_4 <- function() {
+  
+  # Calculate the termination rate by age generation
+  termination_rate <- data %>%
+    filter(status == "TERMINATED", !is.na(generation)) %>%
+    group_by(generation) %>%
+    summarize(termination_count = n()) %>%
+    mutate(termination_rate = termination_count / sum(termination_count))
+  
+  # Sort the age generations in ascending order
+  termination_rate$generation <- factor(termination_rate$generation, 
+                                        levels = c("The Silent Generation", "Baby Boomers", "Gen X", "Millennials", "Gen Z"))
+  
+  # Create the bar plot
+  plot <- ggplot(termination_rate, aes(x = generation, y = termination_rate)) +
+    geom_bar(stat = "identity", fill = "#4DB6AC") +
+    labs(title = "Termination Rate by Age Generation",
+         x = "Age Generation",
+         y = "Termination Rate") +
+    theme_minimal()
+  
+  # Adjust the plot's appearance for better readability and design
+  plot + theme(axis.text.x = element_text(angle = 45, hjust = 1),
+               plot.title = element_text(hjust = 0.5))
+  
+}
+Q7_4()
+
+#---- Analysis 7.5 - Comparison of Termination Types by Age Generation ----
+Q7_5 <- function() {
+  
+  # Group the data by age generation and termination type and calculate the count
+  termination_types <- data %>%
+    filter(status == "TERMINATED", !is.na(generation)) %>%
+    group_by(generation, termination_type) %>%
+    summarise(count = n(), .groups = 'drop') %>%
+    ungroup()
+  
+  # Set the order of termination types for better readability
+  termination_types$termination_type <- factor(termination_types$termination_type, 
+                                               levels = c("Voluntary", "Involuntary"))
+  
+  # Create the bar plot
+  plot <- ggplot(termination_types, aes(x = generation, y = count, fill = termination_type)) +
+    geom_bar(stat = "identity", position = "fill") +
+    labs(title = "Comparison of Termination Types by Age Generation",
+         x = "Age Generation",
+         y = "Frequency",
+         fill = "Termination Type") +
+    scale_fill_manual(values = c("#FFB74D", "#4DB6AC"),
+                      labels = c("Voluntary", "Involuntary")) +
+    theme_minimal()
+  
+  # Adjust the plot's appearance for better readability and design
+  plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+}
+Q7_5()
+
+#---- Analysis 7.6 - Comparison of Termination reasons by age generation and gender ----
+Q7_6 <- function() {
+  # Filter the data for terminated employees and relevant variables
+  terminated_data <- data %>%
+    filter(status == "TERMINATED", !is.na(generation), !is.na(gender)) %>%
+    select(generation, termination_reason, gender)
+  
+  # Group the data by age generation, termination reason, and gender, and calculate the count
+  termination_counts <- terminated_data %>%
+    group_by(generation, termination_reason, gender) %>%
+    summarise(count = n(), .groups = "drop")
+  
+  # Create the bar plot
+  plot <- ggplot(termination_counts, aes(x = generation, y = count, fill = termination_reason)) +
+    geom_bar(stat = "identity", position = "fill") +
+    facet_grid(gender ~ ., scales = "free_y", space = "free_y") +
+    labs(title = "Termination Reasons by Age Generation and Gender",
+         x = "Age Generation",
+         y = "Frequency",
+         fill = "Termination Reason") +
+    scale_fill_manual(values = c("#FFB74D", "#4DB6AC", "#FF7043"),
+                      labels = c("Resignation", "Layoff", "Retirement")) +
+    theme_minimal()
+  
+  # Adjust the plot's appearance for better readability and design
+  plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+Q7_6()
+
+#---- Analysis 7.7 - Analyze Age Generation and Termination Reasons by Department ----
+Q7_7 <- function() {
+  
+  # Filter the data for terminated employees and relevant variables
+  terminated_data <- data %>%
+    filter(status == "TERMINATED", !is.na(generation), !is.na(department_name)) %>%
+    select(generation, termination_reason, department_name)
+  
+  # Calculate the count of terminations by age generation, termination reason, and department
+  termination_counts <- terminated_data %>%
+    group_by(generation, termination_reason, department_name) %>%
+    summarise(count = n(), .groups = "drop")
+  
+  # Create the stacked bar plot
+  ggplot(termination_counts, aes(x = department_name, y = count, fill = termination_reason)) +
+    geom_bar(stat = "identity") +
+    facet_grid(. ~ generation) +
+    labs(title = "Termination Reasons by Age Generation and Department",
+         x = "Department",
+         y = "Count",
+         fill = "Termination Reason") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "bottom")
+}
+Q7_7()
+
+#---- Analysis 7.8 - Identify Age Generation and Termination Reasons by City ----
+Q7_8 <- function() {
+
+  # Filter the data for terminated employees and relevant variables
+  terminated_data <- data %>%
+  filter(status == "TERMINATED", !is.na(generation), !is.na(city_name)) %>%
+  select(generation, termination_reason, city_name)
+  
+  # Calculate the count of terminations by age generation, termination reason, and city
+  termination_counts <- terminated_data %>%
+  group_by(generation, termination_reason, city_name) %>%
+  summarise(count = n(), .groups = "drop")
+  
+  # Create the stacked bar plot
+  ggplot(termination_counts, aes(x = city_name, y = count, fill = termination_reason)) +
+    geom_bar(stat = "identity") +
+    facet_grid(generation ~ ., space = "free_y") +
+    labs(title = "Termination Reasons by Age Generation and City",
+    x = "City",
+    y = "Count",
+    fill = "Termination Reason") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom")
+  
+}
+Q7_8()
+
+#---- Analysis 7.9 - Find the termination reasons over time for different age generations ----
+Q7_9 <- function() {
+  
+  # Filter the data for terminated employees and relevant variables
+  terminated_data <- data %>%
+    filter(status == "TERMINATED", !is.na(generation), !is.na(termination_date)) %>%
+    select(generation, termination_reason, termination_date)
+  
+  # Extract the year from the termination date
+  terminated_data$year <- lubridate::year(terminated_data$termination_date)
+  
+  # Calculate the count of terminations by age generation, termination reason, and year
+  termination_counts <- terminated_data %>%
+    group_by(generation, termination_reason, year) %>%
+    summarise(count = n(), .groups = "drop")
+  
+  # Create the line plot
+  ggplot(termination_counts, aes(x = year, y = count, color = termination_reason, group = termination_reason)) +
+    geom_line(size = 1) +
+    facet_grid(generation ~ .) +
+    scale_x_continuous(breaks = seq(min(terminated_data$year), max(terminated_data$year), 1)) +
+    labs(title = "Termination Reasons Over Time by Age Generation",
+         x = "Year",
+         y = "Count",
+         color = "Termination Reason") +
+    theme_minimal() +
+    theme(legend.position = "bottom",
+          panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
+}
+Q7_9()
+#==============================================================================
+
+#==== Q8. Has the proportion of employee termination been increasing over the years? ====
+#---- Analysis 8.1 - Determine the proportion of terminated employees by year ----
+Q8_1 <- function() {
+  
+  library(ggplot2)
+  
+  # Calculate the termination rate by year
+  termination_rate <- data %>%
+    group_by(status_year) %>%
+    summarize(termination_rate = sum(status == "TERMINATED") / n())
+  
+  # Create the line plot using ggplot2
+  ggplot(termination_rate, aes(x = status_year, y = termination_rate)) +
+    geom_line(color = "magenta", linewidth = 1) +
+    geom_point(color = "magenta", size = 3) +
+    scale_x_continuous(breaks = seq(min(data$status_year), max(data$status_year), 1)) +
+    labs(x = "Year", y = "Termination Rate", title = "Termination Rate Over the Years") +
+    theme_minimal()
+  
+}
+Q8_1()
+
+#---- Analysis 8.2 - Find the termination rates by gender and year ----
+Q8_2 <- function() {
+
+  # Calculate the termination rates by gender and year
+  termination_rates <- data %>%
+    group_by(status_year, gender) %>%
+    summarize(termination_rate = sum(status == "TERMINATED") / n(), .groups = 'drop')
+  
+  # Create the bar plot using ggplot2
+  ggplot(termination_rates, aes(x = status_year, y = termination_rate, fill = gender)) +
+    geom_bar(stat = "identity", position = "dodge") +
+    scale_x_continuous(breaks = seq(min(data$status_year), max(data$status_year), 1)) +
+    labs(x = "Year", y = "Termination Rate", title = "Termination Rates by Gender and Year") +
+    scale_fill_manual(values = c("magenta", "blue"), labels = c("Male", "Female")) +
+    theme_minimal()
+}
+Q8_2()
+
+#---- Analysis 8.3 - Analyse the termination types by year ----
+Q8_3 <- function() {
+  
+  # Calculate the count of termination types by year
+  termination_types <- data %>%
+    filter(status == "TERMINATED") %>%
+    group_by(status_year, termination_type) %>%
+    summarize(termination_count = n(), .groups = 'drop')
+  
+  # Create the stacked bar plot using ggplot2
+  ggplot(termination_types, aes(x = status_year, y = termination_count, fill = termination_type)) +
+    geom_bar(stat = "identity", position = "stack") +
+    scale_x_continuous(breaks = seq(min(data$status_year), max(data$status_year), 1)) +
+    labs(x = "Year", y = "Termination Count", title = "Termination Types by Year") +
+    scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00")) +
+    theme_minimal()
+}
+Q8_3()
+
+#---- Analysis 8.4 - Analyse the termination Rates by Department ----
+Q8_4 <- function() {
+  
+  # Calculate the termination rates by department
+  termination_rates <- data %>%
+    group_by(department_name) %>%
+    summarize(termination_rate = sum(status == "TERMINATED") / n(), .groups = 'drop')
+  
+  # Sort the termination rates in descending order
+  termination_rates <- termination_rates %>%
+    arrange(desc(termination_rate))
+  
+  # Create the bar plot using ggplot2
+  ggplot(termination_rates, aes(x = department_name, y = termination_rate, fill = department_name)) +
+    geom_bar(stat = "identity") +
+    scale_x_discrete(labels = function(x) str_wrap(x, width = 10)) +
+    labs(x = "Department", y = "Termination Rate", title = "Termination Rates by Department") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+}
+Q8_4()
+
+#---- Analysis 8.5 - Analyse the termination Rates by Business Unit ----
+Q8_5 <- function() {
+  
+  # Calculate the termination rates by business unit and year
+  termination_rates <- data %>%
+    group_by(status_year, business_unit) %>%
+    summarize(termination_rate = sum(status == "TERMINATED") / n(), .groups = 'drop')
+  
+  # Create the line plot using ggplot2
+  ggplot(termination_rates, aes(x = status_year, y = termination_rate, color = business_unit)) +
+    geom_line() +
+    geom_point(size = 3) +
+    scale_x_continuous(breaks = seq(min(data$status_year), max(data$status_year), 1)) +
+    labs(x = "Year", y = "Termination Rate", title = "Termination Rates by Business Unit and Year") +
+    scale_color_manual(values = c("#E41A1C", "#377EB8")) +
+    theme_minimal()
+}
+Q8_5()
+
+#==============================================================================
