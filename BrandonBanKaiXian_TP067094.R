@@ -212,7 +212,7 @@ third_idea <- function() {
   
   # Plot number of employees in each age group by year using line graph
   ggplot(generation_count, aes(x = status_year, y = count, color = generation)) +
-    geom_line(size = 0.75, linejoin = "mitre", lineend = "butt") +
+    geom_line(linewidth = 0.75, linejoin = "mitre", lineend = "butt") +
     labs(x = "Year", 
          y = "Number of Employees", 
          title = "Number of Employees by Age Generation Over Time") +
@@ -468,7 +468,7 @@ Q2_1 = function() {
         axis.ticks.y = element_blank(),
         plot.margin = unit(c(1, 1, 1, 5), "cm"),
         plot.title = element_text(hjust = 0.5), # centers the plot title horizontally 
-        panel.background = element_rect(color = "black", size = 1, fill = NA),
+        panel.background = element_rect(color = "black", linewidth = 1, fill = NA),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank()) +
   ggtitle("Count of Layoffs by Department") +
@@ -1261,7 +1261,6 @@ Q6_3 <- function() {
     theme_minimal() +
     theme(legend.position = "none")
 }
-
 Q6_3()
 
 #---- Analysis 6.4 - Examine the trend of employee termination rates over time for Vancouver city ----
