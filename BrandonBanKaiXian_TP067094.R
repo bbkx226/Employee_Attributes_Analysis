@@ -203,9 +203,9 @@ third_idea <- function() {
   
   # Count number of employees in each generation
   generation_count <- data %>%
+    filter(!is.na(generation), status == "ACTIVE") %>%
     group_by(status_year, generation) %>%
     summarize(count = n(), .groups = 'drop') %>%
-    filter(!is.na(generation)) %>%
     ungroup() 
     # After grouping the data and summarizing it, 
     #remove the grouping structure of the data frame
@@ -429,15 +429,6 @@ Q1_7 = function() {
 }
 Q1_7()
 
-#------------------------------- Conclusion -----------------------------------
-# In conclusion, the factors associated with employee termination can be attributed to various reasons based on age, occupation, and job demands. 
-# Employees aged 60 and above are more likely to retire, while those between 20 and 35 are more likely to resign due to exploring other career opportunities, 
-# seeking higher pay, or furthering their education. Layoffs, on the other hand, can happen across all age ranges and are not specific to any particular age group. 
-# Occupation-wise, the meat cutter role has the highest proportion of employees who retire, while cashiers are more likely to resign. 
-# This could be due to the physically demanding nature of meat cutting, which requires a particular skill set and expertise that may take time to develop, leading to retirement after a longer period of service. 
-# In contrast, cashiering involves standing for long periods and repetitive tasks that can lead to burnout or stress, resulting in employees leaving the job earlier or being terminated. 
-# Understanding these factors is essential for employers to develop strategies to retain employees and reduce the cost associated with high turnover rates.
-
 #==============================================================================
 
 #==== Q2. What factors contributed to the high rate of employee layoffs? =====
@@ -454,25 +445,21 @@ Q2_1 = function() {
     summarize(count = n()) %>%
     ungroup()
   
-  # Create a table showing the count of layoffs in each department
-  table <- data_sub_agg %>% 
-    spread(department_name, count, fill = 0)
-
   # Create a heat map
   ggplot(data_sub_agg, aes(x = department_name, y = "")) + 
-  geom_tile(aes(fill = count), color = "white", size = 1.5) + 
-  scale_fill_gradient(low = "#FFFF00", high = "#FF0000") + 
-  # element_blank() removes the text labels
-  theme(axis.text.y = element_blank(), 
-        axis.title.y = element_blank(),
-        axis.ticks.y = element_blank(),
-        plot.margin = unit(c(1, 1, 1, 5), "cm"),
-        plot.title = element_text(hjust = 0.5), # centers the plot title horizontally 
-        panel.background = element_rect(color = "black", linewidth = 1, fill = NA),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()) +
-  ggtitle("Count of Layoffs by Department") +
-  labs(x = "Department", y = "") 
+    geom_tile(aes(fill = count), color = "white", size = 1.5) + 
+    scale_fill_gradient(low = "#FFFF00", high = "#FF0000") + 
+    # element_blank() removes the text labels
+    theme(axis.text.y = element_blank(), 
+          axis.title.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          plot.margin = unit(c(1, 1, 1, 5), "cm"),
+          plot.title = element_text(hjust = 0.5), # centers the plot title horizontally 
+          panel.background = element_rect(color = "black", linewidth = 1, fill = NA),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()) +
+    ggtitle("Count of Layoffs by Department") +
+    labs(x = "Department", y = "") 
 }
 Q2_1()
 
@@ -569,17 +556,6 @@ Q2_4 = function() {
           legend.position = "bottom")
 }
 Q2_4()
-
-#------------------------------- Conclusion ------------------------------------
-# Based on the analysis, it can be concluded that several factors contributed to the high rate of employee layoffs. 
-# Customer service and job categories such as cashier and dairy person have been hit the hardest due to the ease of outsourcing or automation. 
-# On the other hand, store management positions, which are critical to the success of the company, had the lowest number of layoffs.
-# Furthermore, millennial employees, who are often in entry-level positions, have been laid off in the largest numbers. 
-# Companies may lay off employees as a cost-saving measure, and younger employees are more vulnerable due to their lower salaries and less experience. 
-# The adoption of new technologies and the resulting automation of many jobs could also be a contributing factor to layoffs.
-# Overall, these findings suggest that companies are likely looking to cut costs by automating jobs or outsourcing them to other countries. 
-# This trend is likely to continue, impacting entry-level employees and those in job categories that are more easily replaceable. 
-# To mitigate the impact of these changes, companies may need to invest in retraining programs and support for affected employees to transition to new roles or industries.
 
 #==============================================================================
 
@@ -804,15 +780,6 @@ Q3_7 = function() {
 }
 Q3_7()
 
-#------------------------------- Conclusion ------------------------------------
-# Based on the analyses conducted, it can be concluded that there are differences in the number of terminated employees by gender. 
-# Specifically, older female employees are more likely to retire compared to older male employees, which may be due to the fact that 
-# female employees are more likely to be employed in job roles with different retirement patterns compared to those of male employees.
-# Moreover, meat cutter is the job role with the highest number of employees above the age of 60 for both male and female, but a higher number of female 
-# employees had left the job compared to male employees, possibly due to the physical demands of the job becoming more challenging with increasing age.
-# It is noteworthy that Vancouver had the highest number of terminated female employees, which may be attributed to a decline in the jobs, such as meat cutter, where female employees were more represented, 
-# resulting in higher termination rates.
-
 #==============================================================================
 
 #==== Q4. Why has the total number of employees been decreasing since 2013?
@@ -956,7 +923,7 @@ Q4_4 <- function() {
   # Calculate average length of service by year
   average_service_length <- terminated_after_2013 %>%
     group_by(year = termination_year) %>%
-    summarize(avg_service_length = mean(length_of_service))
+    summarize(avg_service_length = mean(service_count))
   
   # Create bar plot
   ggplot(average_service_length, aes(x = year, y = avg_service_length)) +
@@ -1017,17 +984,10 @@ Q4_6 <- function() {
     theme_minimal()
 }
 Q4_6()
-
-#------------------------------- Conclusion ------------------------------------
-# In conclusion, the decline in total employees since 2013 can be linked to high turnover rates in the customer service department, as well as a shift in workforce makeup in this area. 
-# The hard nature of customer service professions, which sometimes requires dealing with problematic clients and can lead to burnout and stress, may contribute to the department's high turnover rates. 
-# Moreover, the decline in Gen X staff and the rise in Millennial staff in the customer service department suggest that the appeal of this department varies by generation. 
-# While Gen X employees may have become exhausted and stressed from working in customer service for an extended period of time, Millennial employees may find this department interesting due to its ability to strengthen communication and interpersonal skills. 
-# The transition in staff typifies how workforce dynamics can change over time with generational shifts.
-
 #==============================================================================
 
 #==== Q5. How does the average length of service vary among terminated employees? ====
+
 #---- Analysis 5.1 - Determine the average length of service by year ----
 Q5_1 <- function() {
   # Filter for terminated employees
@@ -1154,6 +1114,7 @@ Q5_4()
 
 #---- Analysis 5.5 - Analyse average length of service by business unit ----
 Q5_5 <- function() {
+  
   # Calculate average length of service by business unit
   avg_service_by_unit <- data %>%
     group_by(business_unit) %>%
@@ -1190,14 +1151,10 @@ Q5_6 <- function() {
     theme_minimal()
 }
 Q5_6()
-#------------------------------- Conclusion -----------------------------------
-# The average length of service for terminated employees varies significantly depending on the year, department, and city. 
-# By analyzing these variations, companies can gain valuable insights into factors that contribute to employee retention and 
-# implement strategies to improve employee loyalty and reduce turnover rates.
-
 #==============================================================================
 
 #==== Q6. Are there any specific cities, business unit or store locations with a higher rate of employee termination? ====
+
 #---- Analysis 6.1 - Analyze the termination rate in different cities and store name ----
 Q6_1 <- function() {
   
@@ -1250,6 +1207,7 @@ Q6_2()
 
 #---- Analysis 6.3 - Examine the distribution of terminated employees across different business units ----
 Q6_3 <- function() {
+  
   # Filter data for terminated employees
   terminated_employees <- data %>% filter(status == "TERMINATED")
   
@@ -1260,6 +1218,7 @@ Q6_3 <- function() {
     labs(x = "Business Unit", y = "Age", title = "Distribution of Terminated Employees Across Business Units") +
     theme_minimal() +
     theme(legend.position = "none")
+  
 }
 Q6_3()
 
@@ -1469,6 +1428,7 @@ Q7_1 <- function() {
   # Calculate proportion of each generation within each department
   generation_prop <- prop.table(table(generation_dept$department_name, generation_dept$generation), margin = 1)
   
+  View(generation_prop)
   # Reshape data for plotting
   generation_prop <- as.data.frame(generation_prop)
   generation_prop$Var1 <- as.character(generation_prop$Var1)
@@ -1608,7 +1568,7 @@ Q7_5()
 Q7_6 <- function() {
   # Filter the data for terminated employees and relevant variables
   terminated_data <- data %>%
-    filter(status == "TERMINATED", !is.na(generation), !is.na(gender)) %>%
+    filter(status == "TERMINATED", !is.na(generation)) %>%
     select(generation, termination_reason, gender)
   
   # Group the data by age generation, termination reason, and gender, and calculate the count
@@ -1616,8 +1576,12 @@ Q7_6 <- function() {
     group_by(generation, termination_reason, gender) %>%
     summarise(count = n(), .groups = "drop")
   
+  # Sort the age generations in ascending order
+  termination_counts$generation <- factor(termination_counts$generation, 
+                                        levels = c("The Silent Generation", "Baby Boomers", "Gen X", "Millennials", "Gen Z"))
+  
   # Create the bar plot
-  plot <- ggplot(termination_counts, aes(x = generation, y = count, fill = termination_reason)) +
+  ggplot(termination_counts, aes(x = generation, y = count, fill = termination_reason)) +
     geom_bar(stat = "identity", position = "fill") +
     facet_grid(gender ~ ., scales = "free_y", space = "free_y") +
     labs(title = "Termination Reasons by Age Generation and Gender",
@@ -1626,10 +1590,8 @@ Q7_6 <- function() {
          fill = "Termination Reason") +
     scale_fill_manual(values = c("#FFB74D", "#4DB6AC", "#FF7043"),
                       labels = c("Resignation", "Layoff", "Retirement")) +
-    theme_minimal()
-  
-  # Adjust the plot's appearance for better readability and design
-  plot + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+    theme_minimal() + 
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
 }
 Q7_6()
 
@@ -1721,10 +1683,9 @@ Q7_9()
 #==============================================================================
 
 #==== Q8. Has the proportion of employee termination been increasing over the years? ====
+
 #---- Analysis 8.1 - Determine the proportion of terminated employees by year ----
 Q8_1 <- function() {
-  
-  library(ggplot2)
   
   # Calculate the termination rate by year
   termination_rate <- data %>%
@@ -1774,7 +1735,7 @@ Q8_3 <- function() {
     geom_bar(stat = "identity", position = "stack") +
     scale_x_continuous(breaks = seq(min(data$status_year), max(data$status_year), 1)) +
     labs(x = "Year", y = "Termination Count", title = "Termination Types by Year") +
-    scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00")) +
+    scale_fill_manual(values = c("#E69F00", "#56B4E9")) +
     theme_minimal()
 }
 Q8_3()
