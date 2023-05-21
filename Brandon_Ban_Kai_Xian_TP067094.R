@@ -1,15 +1,15 @@
 # Brandon Ban Kai Xian
 # TP067094
 
-#---- Install packages ----
+#---- Assemble packages ----
 install.packages("gridExtra")
 install.packages("plotrix")
 install.packages("tidyverse")
 
-#---- Load packages ----
+#---- Packages loads ----
 library(gridExtra)          # grid.arrange()
 library(plotrix)            # legend
-library(tidyverse)          # included library readr, dplyr, ggplot2, stringr, forcats, lubridate, magrittr
+library(tidyverse)          # included readr, dplyr, ggplot2, stringr, forcats, lubridate, magrittr
 
 # Import data by reading csv file
 setwd("C:/Users/bbkx2/Downloads/project/R/PFDA_Assignment")
@@ -17,14 +17,14 @@ data <- read.csv('employee_attrition.csv', header = TRUE, sep = ",")
 
 # Data Exploration
 # This function takes in the data and displays the number of columns and rows in the data,
-# the number of missing values in the data, the data structure, and the summary of the data
+# the amount of missing data values, the data structure, and the data summary
 # @param data: The data to be explored
 explore_data <- function() {
 
-  # Check number of rows & columns
+  # Check the amount of columns and rows
   cat("The total no. of columns is", ncol(data),"and the total no. of rows is", nrow(data),"\n")
 
-  # Check number of missing values
+  # Verify the number of missing values
   cat("The number of missing values in data:", sum(is.na(data)), "\n\n")
 
   # Check data structure
@@ -52,7 +52,7 @@ clean_data <- function(data) {
   # Remove unnecessary column
   data <- select(data, -c("gender_short", "recorddate_key", "orighiredate_key"))
 
-  # Renaming column names
+  # Changing the column names
   colnames(data) <- c("employee_ID", "birth_date", "termination_date", "age", "service_count", "city_name", 
                       "department_name", "job_title", "store_name", "gender", "termination_reason", 
                       "termination_type", "status_year", "status", "business_unit")
@@ -69,12 +69,12 @@ preprocess_data <- function(data) {
   # Replace default termination date (still working) to "NA"
   data$termination_date = ifelse(data$termination_date == "1/1/1900", NA, data$termination_date)
 
-  # Converted to POSIXct (a date/time data type in R) using the specified date format strings
-  data$birth_date <- as.POSIXct(data$birth_date, format = "%m/%d/%Y")
-  data$termination_date <- as.POSIXct(data$termination_date, format = "%m/%d/%Y")
-
   # Replace typo "resignaton" to "resignation"
   data$termination_reason <- str_replace(data$termination_reason, "Resignaton", "Resignation")
+  
+  # Converted to POSIXct (a date/time data type in R) using the specified date format strings
+  data$termination_date <- as.POSIXct(data$termination_date, format = "%m/%d/%Y")
+  data$birth_date <- as.POSIXct(data$birth_date, format = "%m/%d/%Y")
 
   # Splits the job title string (e.g <Director, Any> to <Director> only) by the comma character 
   # and returns the first element of the resulting string vector
@@ -83,18 +83,18 @@ preprocess_data <- function(data) {
   # Converted job title to character format
   data$job_title <- as.character(data$job_title)
   
-  # Converted character type data into factor
+  # Character type data were converted into a factor
   data <- data %>%
     mutate(
-      city_name = as.factor(city_name),
-      department_name = as.factor(department_name),
-      job_title = as.factor(job_title),
-      store_name = as.factor(store_name),
-      gender = as.factor(gender),
       termination_reason = as.factor(termination_reason),
       termination_type = as.factor(termination_type),
+      department_name = as.factor(department_name),
+      job_title = as.factor(job_title),
       status = as.factor(status),
       business_unit = as.factor(business_unit),
+      store_name = as.factor(store_name),
+      city_name = as.factor(city_name),
+      gender = as.factor(gender),
     )
   
   # Extract the year from the birth date
@@ -148,9 +148,9 @@ first_idea <- function() {
           x = "Year of Termination", # label for the x axis
           y = "Number of Terminations", # label for the y axis
           fill = "Termination Reason") + # label for the legend
-    theme_bw() + # set theme to black and white
-    theme(plot.title = element_text(hjust = 0.5), # center the title
-          axis.text.x = element_text(vjust = 0.5)) # move the x axis labels closer to the axis
+    theme(axis.text.x = element_text(vjust = 0.5), # center the title
+          plot.title = element_text(hjust = 0.5)) + # move the x axis labels closer to the axis
+    theme_bw()# set theme to black and white
 }
 first_idea()
 
@@ -160,9 +160,10 @@ first_idea()
 # and the most frequently cited reason for leaving was the layoff.
 
 # Questions that can be asked:
-# What factors are associated with employee termination?
-# What factors contributed to the high rate of employee layoffs?
-# What is the average length of service for terminated employees? Does this vary by department or job title?
+# What elements contribute to employee termination?
+# What causes led to the high rate of layoffs among employees?
+# How does the median tenure of employment differ among those who have been let go?
+# Is the percentage of employee termination higher in any particular cities, departments, or retail locations?
 
 #---- 2nd Idea - Analysis of employee termination by gender within ten years ----
 second_idea <- function() {
@@ -233,7 +234,10 @@ third_idea()
 # The silent generation disappeared after 2010
 
 # Questions that can be asked:
-# Why has the total number of employees been decreasing since 2013? 
+# Why has the total number of employees been decreasing since 2013?
+# How does the age of the generation impact employee termination?
+# Has the proportion of employee terminations increased over the years?
+
 #==============================================================================
 
 #==== Q1. What factors are associated with employee termination? ===========
@@ -257,11 +261,11 @@ Q1_1 = function() {
 Q1_1()
 
 # Explanation:
-# Employees aged 60 and above are more likely to retire, while those aged between 20 and 35 are more likely to resign. 
-# It’s important to note that layoffs can happen across all age ranges and are not specific to any particular age group.
-# Employees aged 60 and above may be more likely to retire due to reaching retirement age or wanting to reduce their workload
-# employees aged between 20 and 35 may be more likely to resign due to exploring other career opportunities, 
-# seeking higher pay or wanting to further their education
+# While people over 60 are more likely to retire, those aged 20 to 35 are more likely to leave their jobs.
+# However, layoffs may happen to anyone, regardless of age, as they are impacted by 
+# external factors that are out of the employee’s control. Younger employees might leave for 
+# better employment chances or greater wages, but older employees may retire owing to old age 
+# or a desire to lessen their burden.
 
 #---- Analysis 1.2 - Analyze the relationship between job title and termination reason ----
 Q1_2 = function() {
@@ -429,6 +433,12 @@ Q1_7 = function() {
 }
 Q1_7()
 
+#---- Conclusion ----
+# In conclusion, age, occupation, tenure, and gender are all clearly associated with the 
+# reason why someone terminates their employment. Employers ought to take these into 
+# consideration when designing policies and regulations intended to reduce turnover and enhance 
+# retention.
+
 #==============================================================================
 
 #==== Q2. What factors contributed to the high rate of employee layoffs? =====
@@ -556,6 +566,11 @@ Q2_4 = function() {
           legend.position = "bottom")
 }
 Q2_4()
+
+#---- Conclusion ----
+# In general, a variety of causes such as automation, cost reduction strategies and 
+# outsourcing are responsible for the large number of dismissals. These factors have caused job 
+# losses particularly in roles that can be automated or outsourced.
 
 #==============================================================================
 
@@ -780,6 +795,12 @@ Q3_7 = function() {
 }
 Q3_7()
 
+#---- Conclusion ----
+# The differences in termination rates by gender in 2014 can be attributed to 
+# factors such as the gendered division of labour, occupational segregation, voluntary retirement 
+# incentives, industry-specific declines, and gender bias. These factors collectively contribute to 
+# the observed patterns and highlight the importance of addressing gender disparities and 
+# promoting equal opportunities in the workforce
 #==============================================================================
 
 #==== Q4. Why has the total number of employees been decreasing since 2013?
@@ -984,6 +1005,16 @@ Q4_6 <- function() {
     theme_minimal()
 }
 Q4_6()
+
+#---- Conclusion ----
+# In brief, the aggregate figure of workers has been dwindling since 2013 owing to a 
+# multitude of elements including economic circumstances, mechanization, The Great Recession,
+# changes in retirement regulations, the ascent of the gig economy, the subsidence of 
+# manufacturing, and the ascent of automation and digital intelligence. These patterns are guiding 
+# to a decrement in customary full-time occupations, job reduction in the producing area, and job 
+# reduction in an assortment of businesses. It is critical to note that these patterns are not 
+# inevitably unfavourable, but they are contributing to the decrement in the total figure of workers
+
 #==============================================================================
 
 #==== Q5. How does the average length of service vary among terminated employees? ====
@@ -1084,10 +1115,12 @@ Q5_3 <- function() {
 }
 Q5_3()
 
-# Explanation:
-# Based on the graph, it can be observed that "Ocean Falls" is the city with the longest average length of service.
-# this may be that the company in this city may have a strong presence and good reputation in the community, 
-# leading to higher job satisfaction and loyalty among employees.
+# Observation:
+# Ocean Falls has the highest average length of service. This could imply that the company's presence 
+# and reputation in this community promotes greater job satisfaction, devotion, and loyalty among employees. According to Indeed Editorial Team (2021), 
+# Employee loyalty refers to remaining with a company for an extended tenure because one feels valued, respected and supportive of its overarching purpose. 
+# Loyal staff become deeply invested in the organization's prosperity and dedicated to fulfilling its key aims. There may be additional opportunities for career advancement, advancement,
+# and increasing responsibility inside a company that is so well-known in the Ocean Falls community. This possibility of advancement may motivate greater dedication and tenure.
 
 #---- Analysis 5.4 - Determine the average length of service by gender ----
 Q5_4 <- function() {
@@ -1112,6 +1145,14 @@ Q5_4 <- function() {
 }
 Q5_4()
 
+# Observation:
+# In accordance with the analysis, the average length of service for female workers is greater than male workers.
+# Female workers are more disposed to possess familial assignments, like childcare, which can render it more problematic
+# for them to go away their occupations. According to Bureau of Labor Statistics (Vereen, 2023), 
+# ladies are more disposed than men to be the primary caretakers for children under the age of 18. 
+# In 2020, 31.1% of mothers were the primary caretakers for their children, in contrast to 17.7% of fathers. 
+# This can render it more challenging for women to toil full-time or to toil extended hours, which can guide to them persisting in their occupations for longer durations of time.
+
 #---- Analysis 5.5 - Analyse average length of service by business unit ----
 Q5_5 <- function() {
   
@@ -1134,6 +1175,15 @@ Q5_5 <- function() {
 }
 Q5_5()
 
+# Observation:
+# The average length of service for workers in the store locations business unit is approximately 10 years, 
+# while the average length of service for workers in the head office business unit is about 20 years. 
+# This divergence could be on account of the fact that the central office business unit furnishes more job opportunities 
+# for progression than the retail locations business unit. Workers in the retail locations business unit may be more prone to 
+# relinquish their occupations to pursue opportunities in administration, which are frequently only obtainable in the central office business unit. 
+# Additionally, the central office business unit may furnish more opportunities for professional progress, such as coaching and pedagogy programs, 
+# which could render workers in the central office business unit more prone to linger in their occupations.
+
 #---- Analysis 5.6 - Investigate average length of service by stores name ----
 Q5_6 <- function() {
   # Calculate average length of service by store
@@ -1151,6 +1201,27 @@ Q5_6 <- function() {
     theme_minimal()
 }
 Q5_6()
+
+# Observation:
+# The lowest average length of service for employees is at store 44, while the highest average length of service is at store 45. 
+# This can be a result of the workplace. A well-designed and comfortable workspace can influence employee satisfaction, which in turn affects performance, turnover rates, 
+# and the organization's return on investment (VergeSense, 2021). For instance, the working atmosphere at store 44 might be less appealing than at store 45, 
+# which might make employees at store 44 less inclined to stick with the business.
+
+#---- Conclusion ----
+# The evaluation of the average length of service among terminated workers pinpoints 
+# numerous factors that give rise to the noted patterns. Fiscal conditions, like the impact of the 
+# world fiscal crisis, can affect employee length of service , with a decrease during times of 
+# economic downturn and a growth during economic recovery. Additionally, divergences in 
+# average length of service across different departments highlight the role of job level and career 
+# progression, where entry-level positions may have greater turnover rates compared to high level roles. 
+# Company reputation and community impact also play a role, as employees in 
+# locations with a strong company presence tend to have higher average lengths of service. 
+# Gender differences, work-life balance considerations, and opportunities for advancement 
+# within specific business units further contribute to variations in tenure. Finally, the work 
+# environment and management styles can influence employee retention, with positive 
+# environments fostering longer tenures. Understanding these factors helps organizations address 
+# turnover challenges and enhance overall employee satisfaction and organizational effectiveness
 #==============================================================================
 
 #==== Q6. Are there any specific cities, business unit or store locations with a higher rate of employee termination? ====
@@ -1179,6 +1250,12 @@ Q6_1 <- function() {
 }
 Q6_1()
 
+# Observation:
+# The higher termination rate in Store 35 in Vancouver, Store 18 in Nanaimo and Store 37 
+# in Vernon could be influenced by several factors. 
+# These stores are situated in urban places with a high densification of online merchants. 
+# This competition may be guiding to lower earnings and gains, which could be contributing to the higher termination rate.
+
 #---- Analysis 6.2 - Identify the cities or store locations with the highest number of terminated employees. ----
 Q6_2 <- function() {
   
@@ -1205,6 +1282,13 @@ Q6_2 <- function() {
 }
 Q6_2()
 
+# Observation:
+# The elevated figure of terminated workers in Vancouver and Victoria cities could be due to various factors. 
+# One potential reason for the elevated figure of terminated workers in Vancouver and Victoria is the surging coast of living in these cities. 
+# The expanse of domiciliation, food, and transportation has been increasing at a faster rate than wages, 
+# rendering it challenging for many populaces to afford to inhabit in these cities. 
+# As a consequence, some employers are compelled to lay off workers in order to decrement expanses.
+
 #---- Analysis 6.3 - Examine the distribution of terminated employees across different business units ----
 Q6_3 <- function() {
   
@@ -1221,6 +1305,12 @@ Q6_3 <- function() {
   
 }
 Q6_3()
+
+# Observation:
+# Based on the analysis of the violin plot, it appears that terminated employees in the head office tend to be older, 
+# with terminations occurring predominantly after the age of around 55. 
+# On the other hand, the distribution of terminated employees in other business units shows a broader range of ages, 
+# suggesting that terminations can happen at any age within those units.
 
 #---- Analysis 6.4 - Examine the trend of employee termination rates over time for Vancouver city ----
 Q6_4 <- function() {
@@ -1253,6 +1343,12 @@ Q6_4 <- function() {
 }
 Q6_4()
 
+# Observation:
+# It displays the variation in termination rates from the lowest point of approximately 0.05 in 2011 to the highest point of about 0.15 in 2009.
+# The 2008 fiscal catastrophe possessed a considerable impact on the Vancouver economy, and this is likely a foremost factor in the spike in termination rates in 2009. 
+# The catastrophe guided to a sharp decrement in fiscal activity, which resulted in many establishments laying off workers in order to decrement expanses.
+
+
 #---- Analysis 6.5 - Determine the trend of employee termination rates over time for Victoria city ----
 Q6_5 <- function() {
   
@@ -1283,6 +1379,11 @@ Q6_5 <- function() {
     )
 }
 Q6_5()
+
+# Observation:
+# The high termination rate in Victoria City in 2007 and 2008, and the low termination rate in 2011, can be attributed to 
+# the global financial crisis of 2008. It had a substantial impact on the Canadian economy, and Victoria City was no exclusion. 
+# The crisis led to a acute decline in economic action, which resulted in many businesses lay offing employees in order to cut expenditures.
 
 #---- Analysis 6.6 - Analyse the trend of employee termination rates over time for Nanaimo city ----
 Q6_6 <- function() {
@@ -1315,6 +1416,12 @@ Q6_6 <- function() {
     )
 }
 Q6_6()
+
+# Observation:
+# The termination rates in Nanaimo city between 2006 and 2015 may have been impacted by a variety of elements. 
+# One potential explanation is economic circumstances, as the global financial crisis of 2008 could have caused an 
+# increase in terminations in 2007 that tapered off as the economy rebounded. Modifications to company policies or management 
+# could also have had an effect, along with adjustments to the demographic makeup of the workforce. 
 
 #---- Analysis 6.7 - Trend Analysis of Employee Termination Rates over Time for the Stores Business Unit ----
 Q6_7 <- function() {
@@ -1349,6 +1456,11 @@ Q6_7 <- function() {
 }
 Q6_7()
 
+# Observation:
+# Numerous causes might be responsible for the variation in the "STORES" business unit's dismissal rates between 2013 and 2014. 
+# The rate was around 0.075 at its lowest point in 2013 and approximately 0.175 at its greatest point in 2014. 
+# Changes in management might be a factor in the difference by altering personnel policies or the workplace culture. 
+
 #---- Analysis 6.8 - Analysis of Employee Termination Rate Trends Over Time for Store 35 ----
 Q6_8 <- function() {
   
@@ -1380,6 +1492,16 @@ Q6_8 <- function() {
     )
 }
 Q6_8()
+
+# Observation:
+# The termination rates for Store 35 between 2009 and 2011 may have been affected by multiple elements, 
+# such as alterations in the job market, staff maintenance regulations, job pleasure, staff demographics, 
+# and other components such as developments in technology or industry tendencies. Consider a scenario where there 
+# was a labor shortage in a specific year. Due to the high expense of acquiring new employees, the business may have 
+# been more ready to fire employees in this situation. Alternately, the business may have established strategies or plans to 
+# keep workers around, such providing rewards or chances for professional growth, which might have prevented as many layoffs as it caused. 
+# The level of employee engagement and satisfaction may also affect turnover rates. Employees may have been less likely to leave the organization 
+# in a specific year if they were happy with their jobs.
 
 #---- Analysis 6.9 - Exploring the Trend of Employee Termination Rates over Time for Store 37 ----
 Q6_9 <- function() {
@@ -1415,6 +1537,23 @@ Q6_9 <- function() {
 }
 Q6_9()
 
+# Observation:
+# The termination rate of Store 37 between 2008 and 2011 might have been impacted by various elements, such as economic environment, 
+# alterations in administration, company performance, worker demographics, and other things like transformations in technology or industry patterns. 
+# For example, the financial situation during this time may have had an effect on the termination rate. If there was a period of economic downturn or 
+# recession in a particular year, the business could have been obligated to terminate employees due to financial difficulties. Variations in leadership 
+# or direction could also have had an influence in the variation in termination rates. For instance, the business's strategy for managing and retaining 
+# employees may have changed if there was a change in leadership in a given year.
+
+#---- Conclusion ----
+# In conclusion, employee termination rates are an important measure for companies to 
+# monitor, and looking into these rates might reveal information about probable causes of high 
+# turnover. The health of the economy, changes in management or leadership, workforce 
+# demographics, industry-specific characteristics, and organisational changes are just a few of 
+# the elements that may have an impact on employee retention. By identifying these traits and 
+# developing targeted ways to boost employee happiness and engagement, businesses may cut 
+# turnover rates, increase productivity, and build a more stable and engaged workforce.
+
 #==============================================================================
 
 #==== Q7. How does the age generation impact employee termination? ====
@@ -1428,7 +1567,6 @@ Q7_1 <- function() {
   # Calculate proportion of each generation within each department
   generation_prop <- prop.table(table(generation_dept$department_name, generation_dept$generation), margin = 1)
   
-  View(generation_prop)
   # Reshape data for plotting
   generation_prop <- as.data.frame(generation_prop)
   generation_prop$Var1 <- as.character(generation_prop$Var1)
@@ -1446,6 +1584,12 @@ Q7_1 <- function() {
     )
 }
 Q7_1()
+
+# Observation:
+# The analysis reveals interesting patterns regarding the distribution of different generations across departments. 
+# The silent generation appears to be concentrated in the dairy, meats, and produce departments, while a larger proportion of Gen X employees work in the bakery department.
+# Moreover, the number of millennials in the customer service department surpasses that of Gen X. Notably, departments such as Accounting, Audit, Compensation, Employee Data, 
+# Executive, Legal, Training, Recruitment, Labour Relations, Investment, and Information Technology exclusively have Baby Boomers working in them. 
 
 #---- Analysis 7.2 - Identify the departments with the highest representation of each generation ----
 Q7_2 <- function() {
@@ -1478,6 +1622,12 @@ Q7_2 <- function() {
 }
 Q7_2()
 
+# Observation:
+# The analysis reveals distinct termination patterns among different age generations. 
+# It is observed that all individuals from the Silent Generation have chosen retirement as their termination reason. 
+# This aligns with their birth years, as they fall within an age range that typically corresponds to retirement. 
+# Similarly, a significant portion of Baby Boomers also opt for retirement, as they are reaching the age where retirement becomes a common choice.
+
 #---- Analysis 7.3 - Analyze the length of service by age generation and termination reason ----
 Q7_3 <- function() {
   
@@ -1503,6 +1653,13 @@ Q7_3 <- function() {
   
 }
 Q7_3()
+
+# Observation:
+# The analysis of the length of service among different age generations and termination reasons reveals interesting patterns. 
+# Among Baby Boomers, it appears that retirement decisions vary in terms of length of service. 
+# Some Baby Boomers choose to retire after an average length of service of 13 years, indicating a relatively longer career commitment.
+# However, there are also Baby Boomers who resign after an average length of service of 21 years. This discrepancy suggests that individual factors, 
+# such as personal financial readiness or fulfilment of career goals, may influence the decision to retire among this generation.
 
 #---- Analysis 7.4 - Analyse the termination rate by age generation ----
 Q7_4 <- function() {
@@ -1532,6 +1689,14 @@ Q7_4 <- function() {
   
 }
 Q7_4()
+
+# Observation:
+# The findings revealed that baby boomers saw the highest percentage of employment loss, while Gen X experienced the lowest rate. 
+# Several theories can be offered to account for this disparity. Baby boomers are older workers; thus, some may decide to retire, 
+# which would lead to an increase in termination rate. Due to their propensity to work in occupations or industries that are touched 
+# by economic or technological advancement, baby boomers may be at danger of losing their employment. The Gen X workforce, on the other hand, 
+# is in its peak years of employment and may enjoy more job stability as a result of their longer tenure with their companies.
+# They may also be more equipped to handle changes in the workforce as a consequence of their increased knowledge with cutting-edge technologies and trends.  
 
 #---- Analysis 7.5 - Comparison of Termination Types by Age Generation ----
 Q7_5 <- function() {
@@ -1564,6 +1729,13 @@ Q7_5 <- function() {
 }
 Q7_5()
 
+# Observation:
+# Based on the analysis of termination types by age generation, it is evident that all individuals from the Silent Generation terminated voluntarily, 
+# while termination types for Generation X were evenly split between voluntary and involuntary. The Silent Generation, born between the mid-1920s and early 1940s, 
+# experienced different societal and work dynamics compared to subsequent generations. The voluntary terminations among the Silent Generation can be attributed to 
+# factors such as retirement, career fulfilment, and financial stability. Many individuals from this generation may have reached retirement age and decided to retire, 
+# enjoying the benefits of their long work years. Additionally, they may have freely opted to leave their jobs after achieving career contentment and financial security.
+
 #---- Analysis 7.6 - Comparison of Termination reasons by age generation and gender ----
 Q7_6 <- function() {
   # Filter the data for terminated employees and relevant variables
@@ -1595,6 +1767,12 @@ Q7_6 <- function() {
 }
 Q7_6()
 
+# Observation:
+# Since people in age groups of baby boomers or the silent generation are either approaching or have reached retirement age, 
+# the finding that retirement is the most prevalent cause of termination makes sense. Furthermore, it's probable that female workers 
+# in these age groups are more likely to choose retirement as a cause for termination, maybe
+# as a result of their caring obligations or for other reasons.
+
 #---- Analysis 7.7 - Analyze Age Generation and Termination Reasons by Department ----
 Q7_7 <- function() {
   
@@ -1621,6 +1799,11 @@ Q7_7 <- function() {
           legend.position = "bottom")
 }
 Q7_7()
+
+# Observation:
+# The observation that retirement is the most common termination reason for baby boomers in the produce and meats departments 
+# suggests that these employees may have reached the age of retirement and voluntarily decided to leave the workforce. 
+# It could be due to factors such as reaching the eligibility age for retirement benefits, a desire for a change in lifestyle, or personal reasons.
 
 #---- Analysis 7.8 - Identify Age Generation and Termination Reasons by City ----
 Q7_8 <- function() {
@@ -1649,6 +1832,12 @@ Q7_8 <- function() {
   
 }
 Q7_8()
+
+# Observation:
+# The analysis reveals interesting patterns regarding termination reasons and age generations in the cities of Vancouver and Victoria. 
+# The data indicates that Vancouver and Victoria have a higher number of terminations compared to other cities. For baby boomers and the 
+# silent generation in these cities, retirement emerges as the predominant reason for termination. 
+# This observation aligns with the aging workforce in these areas, suggesting that a significant portion of the older population is reaching retirement age.
 
 #---- Analysis 7.9 - Find the termination reasons over time for different age generations ----
 Q7_9 <- function() {
@@ -1680,6 +1869,28 @@ Q7_9 <- function() {
           panel.border = element_rect(color = "black", fill = NA, linewidth = 1))
 }
 Q7_9()
+
+# Observation
+# Based on the analysis of termination reasons over time for different age generations, several patterns can be observed. 
+# For baby boomers and Gen X, it is noticed that resignations have significantly decreased after 2013, and layoffs have started to 
+# occur after 2014. This observation could be attributed to various factors. One possible reason is the economic landscape and changing 
+# job market conditions during that period. After the economic recession, organizations may have been more cautious in implementing layoffs 
+# as a cost-cutting measure, resulting in a shift towards other termination reasons such as retirement or voluntary resignations.
+
+#---- Conclusion ----
+# In conclusion, the analysis of employee generations across departments reveals distinct 
+# patterns. Certain departments have a higher concentration of specific generations, potentially 
+# influenced by the time of department establishment and the expertise of different generations. 
+# The termination reasons vary among age generations, with retirement being common for older 
+# generations and resignations and layoffs more prevalent among Gen X and millennials. 
+# Generation X has the lowest termination rate while baby boomers have the highest, in terms of 
+# both length of service and termination rates. Retirement age, the health of the labor market, 
+# and individual preferences are only a few examples of factors that may explain these variations. 
+# The termination types and reasons also differ between genders within each generation, 
+# highlighting the complex interplay of factors affecting employee departures. The observations 
+# provide valuable insights for organizations in understanding generational dynamics and 
+# tailoring strategies for talent management and retention.
+
 #==============================================================================
 
 #==== Q8. Has the proportion of employee termination been increasing over the years? ====
@@ -1703,6 +1914,12 @@ Q8_1 <- function() {
 }
 Q8_1()
 
+# Observation:
+# The termination rate was found to be lowest in 2013 and highest in 2014.
+# One potential reason for this is the economic climate. The economy was doing well in 2013, 
+# which may have led establishments to recruit more workers and be less likely to lay off present workers. 
+# However, the economy began to decelerate in 2014, which may have led establishments to lay off workers in order to decrement expanses.
+
 #---- Analysis 8.2 - Find the termination rates by gender and year ----
 Q8_2 <- function() {
 
@@ -1720,6 +1937,12 @@ Q8_2 <- function() {
     theme_minimal()
 }
 Q8_2()
+
+# Observation:
+# One possible reason for the observed difference in termination rates between male and female employees is a 
+# shift in the organization's workforce composition or hiring practices. 
+# Before 2008, when male termination rates were higher, it could be speculated that the organization had a larger 
+# proportion of male employees or potentially faced challenges related to the retention or performance of male staff.
 
 #---- Analysis 8.3 - Analyse the termination types by year ----
 Q8_3 <- function() {
@@ -1739,6 +1962,12 @@ Q8_3 <- function() {
     theme_minimal()
 }
 Q8_3()
+
+# Observation:
+# Predicated on the examination of termination forms by year, it was noted that involuntary termination solely occurred in 2014 and 2015. 
+# The Great Recession of 2008–2009 had a substantial influence on the economy, and diverse businesses were coerced to lay off staff in order to survive, 
+# which could be one description for this tendency. 
+# The Linked States' joblessness rate peaked at 10% in October 2009, and it took numerous months for the economy to absolutely recuperate.
 
 #---- Analysis 8.4 - Analyse the termination Rates by Department ----
 Q8_4 <- function() {
@@ -1762,6 +1991,11 @@ Q8_4 <- function() {
 }
 Q8_4()
 
+# Observation
+# The termination rate of information technology (IT) is the greatest among other departments, 
+# while the executive department has a nil -termination rate. 
+# This could be due to the fact that IT is a rapidly transforming field.
+
 #---- Analysis 8.5 - Analyse the termination Rates by Business Unit ----
 Q8_5 <- function() {
   
@@ -1781,4 +2015,13 @@ Q8_5 <- function() {
 }
 Q8_5()
 
+# Observation:
+# The termination rate of the head office grew from 0 to 0.3 in 2009 and attained the highest of 0.5 in 2013 and 2014. 
+# This could be due to numerous elements, including The Great Recession of 2008-2009, changes in the method businesses run, 
+# and changes in applied science. 
+  
+#---- Conclusion ----
+# The proportion of worker termination has been growing over the years. This could be 
+# due to numerous factors, including organizational reorganization, displacement in workforce 
+# composition or recruiting practices, economic downturns, and changes in job demands or expectations.
 #==============================================================================
